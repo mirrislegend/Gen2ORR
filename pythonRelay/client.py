@@ -16,13 +16,13 @@ def get_and_send(data):
     print "about to send data"
     sock.send(json.dumps(data))
     result = json.loads(sock.recv(1024))
-    print "On client side, received response:"
-    print result
+    #print "On client side, received response:"
+    #print result
 
     #ELIDE if don't want each data
     #parse the json and print back each item
-    for term in result:
-        print term, ":", result[term]
+    #for term in result:
+    #    print term, ":", result[term]
 
 def end():
     sock.shutdown(socket.SHUT_RDWR) #terminates connection immediately, further sends and receives are disallowed

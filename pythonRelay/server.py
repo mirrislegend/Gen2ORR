@@ -10,11 +10,11 @@ class MyTCPServerHandler(SocketServer.BaseRequestHandler):
     #need to override the handle method to have communication with client
     def handle(self):
         try:
-            print "HANDLING"
-            data = json.loads(self.request.recv(1024).strip())
-            print data
-            # send some 'ok' back
-            self.request.sendall(json.dumps({'return':'ok'}))
+    	    while self.request.recv(1024)!=0:
+    	    	data = json.loads(self.request.recv(1024).strip())
+                print data
+                	# send some 'ok' back
+                self.request.sendall(json.dumps({'return':'ok'}))
         except Exception, e:
             print "Exception wile receiving message: ", e
 

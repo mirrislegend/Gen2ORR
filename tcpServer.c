@@ -8,6 +8,7 @@
 #include <string.h>
 
 int main(int argc, char *argv[ ]) {
+	//argc is the argument count; argv[] is the argument vector (array of args)
 	struct sockaddr_in my_addr;
 	int lsock;
 	void serve(int);
@@ -97,7 +98,10 @@ void serve(int fd) {
 	write() uses 1 as the handle because 1 is the file descriptor for standard output
 	and is thus relevant for write()*/
 	while ((count = read(fd, buf, 1024)) > 0) {
-		write(1, buf, count);
+		if(write(1, buf, count) < 0){
+			perror("read");
+			exit(1);
+		}
 	}
 	if (count == -1) {
 		perror("read");

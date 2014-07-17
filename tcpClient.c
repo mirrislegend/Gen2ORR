@@ -19,12 +19,16 @@ int main(int argc, char *argv[]) {
 	}
 
 	// set up socket for TCP
+	/*here we do not need to bind() because the address used does not matter
+	to the server */
 	if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
 		perror("socket");
 		exit(1);
 	}
 
 	// Step 2: find the internet address of the server
+	/*gethostbyname() should return a pointer to the hostent structure. If it returns
+	a null pointer, 0, then it means the network address was not found, error */
 	if ((hostinfo = gethostbyname(argv[1])) == 0) {
 		fprintf(stderr, "Host %s does not exist\n", argv[1]);
 		exit(1);

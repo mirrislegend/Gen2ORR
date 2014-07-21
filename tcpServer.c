@@ -94,9 +94,16 @@ void serve(int fd) {
 	int count;
 
 	// Step 7: read incoming data from connection
-	/* read() returns 0 on end-of-file (which is good) and -1 in the event of an error
-	write() uses 1 as the handle because 1 is the file descriptor for standard output
-	and is thus relevant for write()*/
+	
+	/*
+	- read() returns 0 on end-of-file (which is good) and -1 in the event of an error
+	- write() uses 1 as the handle because 1 is the file descriptor for standard output
+	and is thus relevant for write()
+	- read() reads 1024 byes from the file associated with the handle fd and places the 
+	characters read into buf
+	- write() retuns the nuber of bytes returned returned to the file, -1 is returned in the 
+	event of an error
+	*/
 	while ((count = read(fd, buf, 1024)) > 0) {
 		if(write(1, buf, count) < 0){
 			perror("read");

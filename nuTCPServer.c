@@ -10,7 +10,7 @@
 int main(int argc, char const *argv[])
 {
 	//setting up relay table
-    struct relay_entries {
+	struct relay_entries {
 		int position;
 		sockaddr_in client_addr;
 		int port_number;

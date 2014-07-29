@@ -23,6 +23,7 @@ int main(int argc, char const *argv[])
 		string channel_name;
 		relay_entries subscribers[];
 	}channelTable[10];
+	setUpChannelTable(channelTable);
 
 	setUpSocket(argc, *argv[])
 	return 0;
@@ -118,12 +119,67 @@ void serve(int fd)
 
 void setUpRelayTable(relay_entries reTab[])
 {
-	for(int n=0; n<10; n++)
+	int capacity = sizeof(reTab)/sizeof(reTab[0]);
+	for(int n=0; n<capacity; ++n)
 	{
 		reTab[n].position = n;
 		reTab[n].port_number = 34000+n;
-		reTab[n].occupied = 0;		
+		reTab[n].occupied = 0;
+
+		memset(&reTab[n].client_addr, 0, sizeof(reTab[n].client_addr));
+		reTab[n].client_addr.sin_family = AF_INET;
+		reTab[n].client_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+		reTab[n].client_addr.sin_port = htons(reTab[n].port_number);
 	}
 }
 
+void setUpChannelTable(channels chan[])
+{
+	int capacity = sizeof(chan)/sizeof(chan[0]);
+	for (int i = 0; i < capacity; ++i)
+	{
+		for (int j = 0; j < 10; ++j)
+		{
+			chan[i].subscribers[j].occupied = 0;
+			memset(&chan[i].subscribers[j].client_addr, 0, sizeof(chan[i].subscribers[j].client_addr));
+		}
+	}
+	chan[0].channel_name = "A";
+	chan[1].channel_name = "B";
+	chan[2].channel_name = "C";
+	chan[3].channel_name = "D";
+	chan[4].channel_name = "E";
+	chan[5].channel_name = "F";
+	chan[6].channel_name = "G";
+	chan[7].channel_name = "H";
+	chan[8].channel_name = "I";
+	chan[9].channel_name = "J";
+}
+
+/*
+Below is very rough.
+1. We need to handle our errors better. What happens when the requested channel is full? Do forward the subscriber to another channel?
+2. Secondly, we have issues with addresses. Is the address of a subscriber in the channel table meant to be that client's original address or the address given to them in the relay table?
+3. Does this all mean that clients have to be written whole new addresses? I don't see how this is possible
+*/
+void subscribe_to_channel(string chann_req, sockaddr_in subscriber_addr)
+{
+	int capacity = sizeof(channelTable)/sizeof(channelTable[0]);
+	for(int n=0; n<capacity; ++n){
+		if(channelTable[n].channel_name==chann_req){
+			int j = 0;
+			while(channelTable[n].subscribers[j].occupied==1){
+				++j;
+			}
+			if(j==10){
+				fprintf(stderr, "%s\n", "The requested channel is full.");
+				exit(1);
+			}
+			else{
+				channelTable[n].subscribers[j].occupied = 1;
+				channelTable[n].subscribers[j].client_addr = subscriber_addr;
+			}
+		}
+	}
+}
 //getting into the channel table is called 'subscribing'

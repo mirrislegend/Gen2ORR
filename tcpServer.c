@@ -14,36 +14,12 @@ struct relay_entries {
 	int port_number;
 	int occupied;
 }relay_table[10];
-setUpRelayTable(relay_table);
 
 //setting up channel table
 struct channels {
 	char channel_name[1];
 	struct relay_entries subscribers[10];
 }channel_table[10];
-setUpChannelTable(channel_table);
-
-void serve(int fd, struct sockaddr_in *addr)
-{	
-	/*
-	char buf[1024];
-	int count;
-	while((count = read(fd, buf, 1024))>0){
-		if (write(1, buf, count)==-1)
-		{
-			perror("write");
-			exit(1);
-		}
-	}
-	if (count == -1)
-	{
-		perror("read");
-		exit(1);
-	}
-	printf("connection terminated\n");
-	*/
-	add_to_relay(addr);
-}
 
 void setUpRelayTable(struct relay_entries *table[])
 {
@@ -133,11 +109,33 @@ void add_to_relay(struct sockaddr_in *addr)
 	*table_entry.relay_addr.sin_port = *table_entry.port_number;
 }
 
-int main(int argc, char const *argv[])
+
+void serve(int fd, struct sockaddr_in *addr)
+{	
+	/*
+	char buf[1024];
+	int count;
+	while((count = read(fd, buf, 1024))>0){
+		if (write(1, buf, count)==-1)
+		{
+			perror("write");
+			exit(1);
+		}
+	}
+	if (count == -1)
+	{
+		perror("read");
+		exit(1);
+	}
+	printf("connection terminated\n");
+	*/
+	add_to_relay(addr);
+}
+
+void setUpServerSocket(int argc, char const *argv[])
 {
 	//declaring variables and methods for later use
 	int lsock;
-	void serve(int);
 
 	//setting up our address
 	struct sockaddr_in my_addr;
@@ -199,6 +197,14 @@ int main(int argc, char const *argv[])
 				break;
 		}
 	}
+}
 
+int main(int argc, char const *argv[])
+{
+	//setting up
+	setUpRelayTable(relay_table);
+	setUpChannelTable(channel_table);
+	setUpServerSocket(argc, argv);
+	
 	return 0;
 }

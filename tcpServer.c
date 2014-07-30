@@ -7,112 +7,198 @@
 #include <arpa/inet.h>
 #include <string.h>
 
-int main(int argc, char *argv[ ]) {
-	//argc is the argument count; argv[] is the argument vector (array of args)
-	struct sockaddr_in my_addr;
+int main(int argc, char const *argv[])
+{
+	//setting up relay table
+	struct relay_entries {
+		int position;
+		sockaddr_in relay_addr;
+		int port_number;
+		int occupied;
+	}relay_table[10];
+	setUpRelayTable(relay_table);
+
+	//setting up channel table
+	struct channels {
+		string channel_name;
+		relay_entries subscribers[];
+	}channel_table[10];
+	setUpChannelTable(channel_table);
+
+	//declaring variables and methods for later use
 	int lsock;
 	void serve(int);
-	if (argc != 2) {
-		fprintf(stderr, "Usage: server port\n");
-		exit(1);
-	}
 
-	// Step 1: establish a socket for TCP
-	if ((lsock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-		perror("socket");
-		exit(1);
-	}
-
-	/* Step 2: set up our address */
+	//setting up our address
+	struct sockaddr_in my_addr;
 	memset(&my_addr, 0, sizeof(my_addr));
 	my_addr.sin_family = AF_INET;
 	my_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 	my_addr.sin_port = htons(atoi(argv[1]));
 
-	/* Step 3: bind the address to our socket */
-	if (bind(lsock, (struct sockaddr *)&my_addr,
-		sizeof(my_addr)) < 0) {
+	//error-handling
+	if (argc != 2)
+	{
+		fprintf(stderr, "%s\n", "Usage: server port");
+		exit(1);
+	}
+
+	//creating our socket
+	if ((lsock = socket(AF_INET, SOCK_STREAM, 0))<0)
+	{
+		perror("socket");
+		exit(1);
+	}
+
+	//binding address to socket
+	if(bind(lsock, (struct sockaddr *)&my_addr, sizeof(my_addr))==-1)
+	{
 		perror("bind");
 		exit(1);
 	}
 
-	/* Step 4: put socket into �listening mode� */
-	//only necessary for connection-oriented data models
-	if (listen(lsock, 5) < 0) {
-		/*lsock is the (int) socket descriptor, 5 is the (int) backlog
-		 the number of pending connections that can be queued at any time*/
+	//putting socket into listening mode
+	if (listen(lsock, 5)==-1)
+	{
 		perror("listen");
-		/*An error occurs if -1 is returned*/
 		exit(1);
 	}
 
-	/*While loop runs while 1 is true i.e. forever*/
-	while (1) {
+	//accepting connections
+	while(1){
 		int csock;
 		struct sockaddr_in client_addr;
 		socklen_t client_len = sizeof(client_addr);
 
-		/* Step 5: receive a connection */
-		/*accept() creates a new socket (csock) with the same properties as the
-		original (lsock) and returns a file descriptor for it (0 for standard input,
-		1 for standard output, and 2 for standard error).
-		Once a connection is made, the pending connection is removed from the queue.
-		- lsock is the listening socket that has the connection queued
-		- * &client_addr is a pointer to a sockaddr structure to receive the client's
-		address information
-		- &client_len is a pointer to a socklen_t location that specifies the size
-		of the client address structure passed to accept()
-		NOTE: dataggram sockets do not require processing by aaccept() since the
-		receiver can immediately respond to the request using the listening socket*/
-		csock = accept(lsock,
-			(struct sockaddr *)&client_addr, &client_len);
-		printf("Received connection from %s\n",		
-			inet_ntoa(client_addr.sin_addr));
-		/*Below is a forked off process to handle the connection on the new socket.
-		- If the file descriptor returned from accept is -1, we have an error.
-		- If the file descriptor returned is 0, that's good! We call serve() to handle
-		the connection using the file descriptor as the method input*/
-			switch (fork( )) {
+		//setting up client socket and accepting pending connection
+		csock = accept(lsock, (struct  sockaddr *)&client_addr, &client_len);
+
+		//acknowledgement
+		printf("Received connection from %s\n", inet_ntoa(client_addr.sin_addr));
+
+		//forking
+		switch(fork()){
 			case -1:
 				perror("fork");
 				exit(1);
 			case 0:
-				// Step 6: create a new process to handle connection
-				serve(csock);
+				serve(csock, client_addr);
 				break;
-			default:	
+			default:
 				close(csock);
 				break;
 		}
 	}
-	//line below is merely to terminate program
+
 	return 0;
 }
 
-void serve(int fd) {
+void serve(int fd, sockaddr_in addr)
+{	
+	/*
 	char buf[1024];
 	int count;
-
-	// Step 7: read incoming data from connection
-	
-	/*
-	- read() returns 0 on end-of-file (which is good) and -1 in the event of an error
-	- write() uses 1 as the handle because 1 is the file descriptor for standard output
-	and is thus relevant for write()
-	- read() reads 1024 byes from the file associated with the handle fd and places the 
-	characters read into buf
-	- write() retuns the nuber of bytes returned returned to the file, -1 is returned in the 
-	event of an error
-	*/
-	while ((count = read(fd, buf, 1024)) > 0) {
-		if(write(1, buf, count) < 0){
-			perror("read");
+	while((count = read(fd, buf, 1024))>0){
+		if (write(1, buf, count)==-1)
+		{
+			perror("write");
 			exit(1);
 		}
 	}
-	if (count == -1) {
+	if (count == -1)
+	{
 		perror("read");
 		exit(1);
 	}
 	printf("connection terminated\n");
+	*/
+	add_to_relay(addr);
+}
+
+void setUpRelayTable(relay_entries table[])
+{
+	int capacity = sizeof(table)/sizeof(table[0]);
+	for(int n=0; n<capacity; ++n)
+	{
+		relay_entries * table_entry = &table[n];
+		*table_entry.position = n;
+		*table_entry.port_number = 34000+n;
+		*table_entry.occupied = 0;
+
+		/*
+		keep an eye on first parameter of the memset method below, the & is gone because table_entry is already an adress
+		*/
+		memset(table_entry.relay_addr, 0, sizeof(*table_entry.relay_addr));
+		*table_entry.relay_addr.sin_family = AF_INET;
+		*table_entry.relay_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+		*table_entry.relay_addr.sin_port = htons(*table_entry.port_number);
+	}
+}
+
+void setUpChannelTable(channels table[])
+{
+	//setting up the channel names
+	table[0].channel_name = "A";
+	table[1].channel_name = "B";
+	table[2].channel_name = "C";
+	table[3].channel_name = "D";
+	table[4].channel_name = "E";
+	table[5].channel_name = "F";
+	table[6].channel_name = "G";
+	table[7].channel_name = "H";
+	table[8].channel_name = "I";
+	table[9].channel_name = "J";
+	//intializing subscriber relay entries
+	int capacity = sizeof(table)/sizeof(table[0]);
+	for (int i = 0; i < capacity; ++i){
+		for (int j = 0; j < 10; ++j){	
+			relay_entries * table_entry = &table[i].subscribers[j];
+			*table_entry.occupied = 0;
+			*table_entry.position = j;
+			memset(table_entry.relay_addr, 0, sizeof(*table_entry.relay_addr));
+		}
+	}
+}
+
+/*
+Below is very rough.
+1. We need to handle our errors better. What happens when the requested channel is full? Do forward the subscriber to another channel?
+2. Secondly, we have issues with addresses. Is the address of a subscriber in the channel table meant to be that client's original address or the address given to them in the relay table?
+3. Does this all mean that clients have to be written whole new addresses? I don't see how this is possible
+*/
+void subscribe_to_channel(string chann_req, sockaddr_in subscriber_addr)
+{
+	int capacity = sizeof(channel_table)/sizeof(channel_table[0]);
+	for(int n=0; n<capacity; ++n){
+		if(channel_table[n].channel_name==chann_req){
+			int j = 0;
+			while(channel_table[n].subscribers[j].occupied==1){
+				++j;
+				if(j==10){
+					fprintf(stderr, "%s\n", "The requested channel is full.");
+					exit(1);
+				}
+			}
+			relay_entries * table_entry = &channel_table[n].subscribers[j];
+			*table_entry.occupied = 1;
+			*table_entry.relay_addr = subscriber_addr;
+			*table_entry.port_number = ntohs(subscriber_addr.relay_addr.sin_port);
+		}
+	}
+}
+
+void add_to_relay(sockaddr_in addr)
+{
+	int j = 0;
+	while(relay_table[j].occupied==1){
+		++j;
+		if(j==10){
+			fprintf(stderr, "%s\n", "The relay is full.");
+			exit(1);
+		}
+	}
+	relay_entries * table_entry = &relay_table[j];
+	*table_entry.occupied = 1;
+	*table_entry.relay_addr = addr;
+	*table_entry.relay_addr.sin_port = *table_entry.port_number;
 }

@@ -12,7 +12,7 @@ int main(int argc, char const *argv[])
 	//setting up relay table
 	struct relay_entries {
 		int position;
-		sockaddr_in client_addr;
+		sockaddr_in relay_addr;
 		int port_number;
 		int occupied;
 	}relayTable[10];
@@ -122,28 +122,24 @@ void setUpRelayTable(relay_entries reTab[])
 	int capacity = sizeof(reTab)/sizeof(reTab[0]);
 	for(int n=0; n<capacity; ++n)
 	{
-		reTab[n].position = n;
-		reTab[n].port_number = 34000+n;
-		reTab[n].occupied = 0;
+		relay_entries * table_entry = &reTab[n];
+		*table_entry.position = n;
+		*table_entry.port_number = 34000+n;
+		*table_entry.occupied = 0;
 
-		memset(&reTab[n].client_addr, 0, sizeof(reTab[n].client_addr));
-		reTab[n].client_addr.sin_family = AF_INET;
-		reTab[n].client_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-		reTab[n].client_addr.sin_port = htons(reTab[n].port_number);
+		/*
+		keep an eye on first parameter of the memset method below, the & is gone because table_entry is already an adress
+		*/
+		memset(table_entry.relay_addr, 0, sizeof(*table_entry.relay_addr));
+		*table_entry.relay_addr.sin_family = AF_INET;
+		*table_entry.relay_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+		*table_entry.relay_addr.sin_port = htons(*table_entry.port_number);
 	}
 }
 
 void setUpChannelTable(channels chan[])
 {
-	int capacity = sizeof(chan)/sizeof(chan[0]);
-	for (int i = 0; i < capacity; ++i)
-	{
-		for (int j = 0; j < 10; ++j)
-		{
-			chan[i].subscribers[j].occupied = 0;
-			memset(&chan[i].subscribers[j].client_addr, 0, sizeof(chan[i].subscribers[j].client_addr));
-		}
-	}
+	//setting up the channel names
 	chan[0].channel_name = "A";
 	chan[1].channel_name = "B";
 	chan[2].channel_name = "C";
@@ -154,6 +150,16 @@ void setUpChannelTable(channels chan[])
 	chan[7].channel_name = "H";
 	chan[8].channel_name = "I";
 	chan[9].channel_name = "J";
+	//intializing subscriber relay entries
+	int capacity = sizeof(chan)/sizeof(chan[0]);
+	for (int i = 0; i < capacity; ++i){
+		for (int j = 0; j < 10; ++j){	
+			relay_entries * table_entry = &chan[i].subscribers[j];
+			*table_entry.occupied = 0;
+			*table_entry.position = j;
+			memset(table_entry.relay_addr, 0, sizeof(*table_entry.relay_addr));
+		}
+	}
 }
 
 /*
@@ -170,16 +176,15 @@ void subscribe_to_channel(string chann_req, sockaddr_in subscriber_addr)
 			int j = 0;
 			while(channelTable[n].subscribers[j].occupied==1){
 				++j;
+				if(j==10){
+					fprintf(stderr, "%s\n", "The requested channel is full.");
+					exit(1);
+				}
 			}
-			if(j==10){
-				fprintf(stderr, "%s\n", "The requested channel is full.");
-				exit(1);
-			}
-			else{
-				channelTable[n].subscribers[j].occupied = 1;
-				channelTable[n].subscribers[j].client_addr = subscriber_addr;
-			}
+			relay_entries * table_entry = &channelTable[n].subscribers[j];
+			*table_entry.occupied = 1;
+			*table_entry.relay_addr = subscriber_addr;
+			*table_entry.port_number = ntohs(subscriber_addr.relay_addr.sin_port);
 		}
 	}
 }
-//getting into the channel table is called 'subscribing'

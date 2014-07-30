@@ -15,23 +15,17 @@ int main(int argc, char const *argv[])
 		sockaddr_in relay_addr;
 		int port_number;
 		int occupied;
-	}relayTable[10];
-	setUpRelayTable(relayTable);
+	}relay_table[10];
+	setUpRelayTable(relay_table);
 
 	//setting up channel table
 	struct channels {
 		string channel_name;
 		relay_entries subscribers[];
-	}channelTable[10];
-	setUpChannelTable(channelTable);
+	}channel_table[10];
+	setUpChannelTable(channel_table);
 
-	setUpSocket(argc, *argv[])
-	return 0;
-}
-
-void setUpSocket(int argc, char const *argv[])
-{
-	//declaring variables and methods for latter use
+	//declaring variables and methods for later use
 	int lsock;
 	void serve(int);
 
@@ -88,18 +82,20 @@ void setUpSocket(int argc, char const *argv[])
 				perror("fork");
 				exit(1);
 			case 0:
-				serve(csock);
+				serve(csock, client_addr);
 				break;
 			default:
 				close(csock);
 				break;
 		}
 	}
+
+	return 0;
 }
 
-void serve(int fd)
+void serve(int fd, sockaddr_in addr)
 {	
-	//the code below is just there, instead have some code here that puts things into the relay table and subscribes to channels
+	/*
 	char buf[1024];
 	int count;
 	while((count = read(fd, buf, 1024))>0){
@@ -115,14 +111,16 @@ void serve(int fd)
 		exit(1);
 	}
 	printf("connection terminated\n");
+	*/
+	add_to_relay(addr);
 }
 
-void setUpRelayTable(relay_entries reTab[])
+void setUpRelayTable(relay_entries table[])
 {
-	int capacity = sizeof(reTab)/sizeof(reTab[0]);
+	int capacity = sizeof(table)/sizeof(table[0]);
 	for(int n=0; n<capacity; ++n)
 	{
-		relay_entries * table_entry = &reTab[n];
+		relay_entries * table_entry = &table[n];
 		*table_entry.position = n;
 		*table_entry.port_number = 34000+n;
 		*table_entry.occupied = 0;
@@ -137,24 +135,24 @@ void setUpRelayTable(relay_entries reTab[])
 	}
 }
 
-void setUpChannelTable(channels chan[])
+void setUpChannelTable(channels table[])
 {
 	//setting up the channel names
-	chan[0].channel_name = "A";
-	chan[1].channel_name = "B";
-	chan[2].channel_name = "C";
-	chan[3].channel_name = "D";
-	chan[4].channel_name = "E";
-	chan[5].channel_name = "F";
-	chan[6].channel_name = "G";
-	chan[7].channel_name = "H";
-	chan[8].channel_name = "I";
-	chan[9].channel_name = "J";
+	table[0].channel_name = "A";
+	table[1].channel_name = "B";
+	table[2].channel_name = "C";
+	table[3].channel_name = "D";
+	table[4].channel_name = "E";
+	table[5].channel_name = "F";
+	table[6].channel_name = "G";
+	table[7].channel_name = "H";
+	table[8].channel_name = "I";
+	table[9].channel_name = "J";
 	//intializing subscriber relay entries
-	int capacity = sizeof(chan)/sizeof(chan[0]);
+	int capacity = sizeof(table)/sizeof(table[0]);
 	for (int i = 0; i < capacity; ++i){
 		for (int j = 0; j < 10; ++j){	
-			relay_entries * table_entry = &chan[i].subscribers[j];
+			relay_entries * table_entry = &table[i].subscribers[j];
 			*table_entry.occupied = 0;
 			*table_entry.position = j;
 			memset(table_entry.relay_addr, 0, sizeof(*table_entry.relay_addr));
@@ -170,21 +168,37 @@ Below is very rough.
 */
 void subscribe_to_channel(string chann_req, sockaddr_in subscriber_addr)
 {
-	int capacity = sizeof(channelTable)/sizeof(channelTable[0]);
+	int capacity = sizeof(channel_table)/sizeof(channel_table[0]);
 	for(int n=0; n<capacity; ++n){
-		if(channelTable[n].channel_name==chann_req){
+		if(channel_table[n].channel_name==chann_req){
 			int j = 0;
-			while(channelTable[n].subscribers[j].occupied==1){
+			while(channel_table[n].subscribers[j].occupied==1){
 				++j;
 				if(j==10){
 					fprintf(stderr, "%s\n", "The requested channel is full.");
 					exit(1);
 				}
 			}
-			relay_entries * table_entry = &channelTable[n].subscribers[j];
+			relay_entries * table_entry = &channel_table[n].subscribers[j];
 			*table_entry.occupied = 1;
 			*table_entry.relay_addr = subscriber_addr;
 			*table_entry.port_number = ntohs(subscriber_addr.relay_addr.sin_port);
 		}
 	}
+}
+
+void add_to_relay(sockaddr_in addr)
+{
+	int j = 0;
+	while(relay_table[j].occupied==1){
+		++j;
+		if(j==10){
+			fprintf(stderr, "%s\n", "The relay is full.");
+			exit(1);
+		}
+	}
+	relay_entries * table_entry = &relay_table[j];
+	*table_entry.occupied = 1;
+	*table_entry.relay_addr = addr;
+	*table_entry.relay_addr.sin_port = *table_entry.port_number;
 }

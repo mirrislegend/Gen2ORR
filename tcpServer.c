@@ -9,15 +9,15 @@
 
 //setting up relay table
 struct relay_entry {
-	int position;
+	const int position;
 	struct sockaddr_in relay_addr;
-	int port_number;
+	const int port_number;
 	int occupied;
 }relay_table[10];
 
 //setting up channel table
 struct channel {
-	char channel_name[1];
+	const char *channel_name;
 	struct relay_entry subscribers[10];
 }channel_table[10];
 
@@ -43,16 +43,16 @@ void setUpRelayTable(struct relay_entry table[])
 void setUpChannelTable(struct channel table[])
 {
 	//setting up the channel names
-	table[0].channel_name[0] = 'A';
-	table[1].channel_name[0] = 'B';
-	table[2].channel_name[0] = 'C';
-	table[3].channel_name[0] = 'D';
-	table[4].channel_name[0] = 'E';
-	table[5].channel_name[0] = 'F';
-	table[6].channel_name[0] = 'G';
-	table[7].channel_name[0] = 'H';
-	table[8].channel_name[0] = 'I';
-	table[9].channel_name[0] = 'J';
+	table[0].channel_name = "A";
+	table[1].channel_name = "B";
+	table[2].channel_name = "C";
+	table[3].channel_name = "D";
+	table[4].channel_name = "E";
+	table[5].channel_name = "F";
+	table[6].channel_name = "G";
+	table[7].channel_name = "H";
+	table[8].channel_name = "I";
+	table[9].channel_name = "J";
 	//intializing subscriber relay entries
 	int capacity = 10;
 	for (int i = 0; i < capacity; ++i){
@@ -71,11 +71,12 @@ Below is very rough.
 2. Secondly, we have issues with addresses. Is the address of a subscriber in the channel table meant to be that client's original address or the address given to them in the relay table?
 3. Does this all mean that clients have to be written whole new addresses? I don't see how this is possible
 */
-void subscribe_to_channel(char chann_req, struct sockaddr_in *subscriber_addr)
+void subscribe_to_channel(char *chann_req, struct sockaddr_in *subscriber_addr)
 {
 	int capacity = 10;
-	for(int n=0; n<capacity; ++n){
-		if(channel_table[n].channel_name[0]==chann_req){
+	int n = 0;
+	for(n; n<capacity; ++n){
+		if(channel_table[n].channel_name[0]==chann_req[0]){
 			int j = 0;
 			while(channel_table[n].subscribers[j].occupied==1){
 				++j;
@@ -88,15 +89,12 @@ void subscribe_to_channel(char chann_req, struct sockaddr_in *subscriber_addr)
 			table_entry->occupied = 1;
 			table_entry->relay_addr = *subscriber_addr;
 			table_entry->port_number = ntohs(subscriber_addr->relay_addr.sin_port);
-		}
-		else{
-			fprintf(stderr, "%s\n", "The channel requested does not exist.");
-			exit(1);
+			break;
 		}
 	}
 }
 
-void add_to_relay(struct sockaddr_in *addr)
+int add_to_relay(struct sockaddr_in *addr)
 {
 	int j = 0;
 	while(relay_table[j].occupied==1){
@@ -110,6 +108,8 @@ void add_to_relay(struct sockaddr_in *addr)
 	table_entry->occupied = 1;
 	table_entry->relay_addr = *addr;
 	table_entry->relay_addr.sin_port = table_entry->port_number;
+
+	return table_entry->port_number;
 }
 
 
@@ -132,8 +132,8 @@ void serve(int fd, struct sockaddr_in *addr)
 	}
 	printf("connection terminated\n");
 	*/
-	//adding client to relay table
-	add_to_relay(addr);
+	//adding client to relay table and obtaining new port for allocation
+	int allocated_port = add_to_relay(addr);
 	//closing connection to client
 	if (close(fd)==-1)
 	{

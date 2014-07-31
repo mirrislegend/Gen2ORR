@@ -26,18 +26,17 @@ void setUpRelayTable(struct relay_entry table[])
 	int capacity = 10;
 	for(int n=0; n<capacity; ++n)
 	{
-		relay_entry * table_entry = &table[n];
-		*table_entry.position = n;
-		*table_entry.port_number = 34000+n;
-		*table_entry.occupied = 0;
+		table[n].position = n;
+		table[n].port_number = 34000+n;
+		table[n].occupied = 0;
 
 		/*
 		keep an eye on first parameter of the memset method below, the & is gone because table_entry is already an adress
 		*/
-		memset(table_entry.relay_addr, 0, sizeof(*table_entry.relay_addr));
-		*table_entry.relay_addr.sin_family = AF_INET;
-		*table_entry.relay_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-		*table_entry.relay_addr.sin_port = htons(*table_entry.port_number);
+		memset(&(table[n].relay_addr), 0, sizeof(table[n].relay_addr));
+		table[n].relay_addr.sin_family = AF_INET;
+		table[n].relay_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+		table[n].relay_addr.sin_port = htons(table[n].port_number);
 	}
 }
 
@@ -59,9 +58,9 @@ void setUpChannelTable(struct channel table[])
 	for (int i = 0; i < capacity; ++i){
 		for (int j = 0; j < 10; ++j){	
 			relay_entry * table_entry = &table[i].subscribers[j];
-			*table_entry.occupied = 0;
-			*table_entry.position = j;
-			memset(table_entry.relay_addr, 0, sizeof(*table_entry.relay_addr));
+			table_entry->occupied = 0;
+			table_entry->position = j;
+			memset(&(table_entry->relay_addr), 0, sizeof(table_entry->relay_addr));
 		}
 	}
 }
@@ -86,9 +85,9 @@ void subscribe_to_channel(char chann_req, struct sockaddr_in *subscriber_addr)
 				}
 			}
 			relay_entry * table_entry = &channel_table[n].subscribers[j];
-			*table_entry.occupied = 1;
-			*table_entry.relay_addr = *subscriber_addr;
-			*table_entry.port_number = ntohs(subscriber_addr->relay_addr.sin_port);
+			table_entry->occupied = 1;
+			table_entry->relay_addr = *subscriber_addr;
+			table_entry->port_number = ntohs(subscriber_addr->relay_addr.sin_port);
 		}
 		else{
 			fprintf(stderr, "%s\n", "The channel requested does not exist.");
@@ -108,9 +107,9 @@ void add_to_relay(struct sockaddr_in *addr)
 		}
 	}
 	relay_entry * table_entry = &relay_table[j];
-	*table_entry.occupied = 1;
-	*table_entry.relay_addr = *addr;
-	*table_entry.relay_addr.sin_port = *table_entry.port_number;
+	table_entry->occupied = 1;
+	table_entry->relay_addr = *addr;
+	table_entry->relay_addr.sin_port = table_entry->port_number;
 }
 
 

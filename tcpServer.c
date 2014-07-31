@@ -33,7 +33,7 @@ void setUpRelayTable(struct relay_entry table[])
 		/*
 		keep an eye on first parameter of the memset method below, the & is gone because table_entry is already an adress
 		*/
-		memset(&(table[n].relay_addr), 0, sizeof(table[n].relay_addr));
+		memset(&table[n].relay_addr, 0, sizeof(table[n].relay_addr));
 		table[n].relay_addr.sin_family = AF_INET;
 		table[n].relay_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 		table[n].relay_addr.sin_port = htons(table[n].port_number);
@@ -60,7 +60,7 @@ void setUpChannelTable(struct channel table[])
 			relay_entry * table_entry = &table[i].subscribers[j];
 			table_entry->occupied = 0;
 			table_entry->position = j;
-			memset(&(table_entry->relay_addr), 0, sizeof(table_entry->relay_addr));
+			memset(&table_entry->relay_addr, 0, sizeof(table_entry->relay_addr));
 		}
 	}
 }

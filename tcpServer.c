@@ -8,7 +8,7 @@
 #include <string.h>
 
 //setting up relay table
-struct relay_entries {
+struct relay_entry {
 	int position;
 	struct sockaddr_in relay_addr;
 	int port_number;
@@ -16,17 +16,17 @@ struct relay_entries {
 }relay_table[10];
 
 //setting up channel table
-struct channels {
+struct channel {
 	char channel_name[1];
-	struct relay_entries subscribers[10];
+	struct relay_entry subscribers[10];
 }channel_table[10];
 
-void setUpRelayTable(struct relay_entries *table[])
+void setUpRelayTable(struct relay_entry table[])
 {
-	int capacity = sizeof(table)/sizeof(table[0]);
+	int capacity = 10;
 	for(int n=0; n<capacity; ++n)
 	{
-		relay_entries * table_entry = &table[n];
+		relay_entry * table_entry = &table[n];
 		*table_entry.position = n;
 		*table_entry.port_number = 34000+n;
 		*table_entry.occupied = 0;
@@ -41,7 +41,7 @@ void setUpRelayTable(struct relay_entries *table[])
 	}
 }
 
-void setUpChannelTable(struct channels *table[])
+void setUpChannelTable(struct channel table[])
 {
 	//setting up the channel names
 	table[0].channel_name[0] = 'A';
@@ -55,10 +55,10 @@ void setUpChannelTable(struct channels *table[])
 	table[8].channel_name[0] = 'I';
 	table[9].channel_name[0] = 'J';
 	//intializing subscriber relay entries
-	int capacity = sizeof(table)/sizeof(table[0]);
+	int capacity = 10;
 	for (int i = 0; i < capacity; ++i){
 		for (int j = 0; j < 10; ++j){	
-			relay_entries * table_entry = &table[i].subscribers[j];
+			relay_entry * table_entry = &table[i].subscribers[j];
 			*table_entry.occupied = 0;
 			*table_entry.position = j;
 			memset(table_entry.relay_addr, 0, sizeof(*table_entry.relay_addr));
@@ -74,7 +74,7 @@ Below is very rough.
 */
 void subscribe_to_channel(char chann_req, struct sockaddr_in *subscriber_addr)
 {
-	int capacity = sizeof(channel_table)/sizeof(channel_table[0]);
+	int capacity = 10;
 	for(int n=0; n<capacity; ++n){
 		if(channel_table[n].channel_name[0]==chann_req){
 			int j = 0;
@@ -85,10 +85,14 @@ void subscribe_to_channel(char chann_req, struct sockaddr_in *subscriber_addr)
 					exit(1);
 				}
 			}
-			relay_entries * table_entry = &channel_table[n].subscribers[j];
+			relay_entry * table_entry = &channel_table[n].subscribers[j];
 			*table_entry.occupied = 1;
-			*table_entry.relay_addr = subscriber_addr;
-			*table_entry.port_number = ntohs(subscriber_addr.relay_addr.sin_port);
+			*table_entry.relay_addr = *subscriber_addr;
+			*table_entry.port_number = ntohs(subscriber_addr->relay_addr.sin_port);
+		}
+		else{
+			fprintf(stderr, "%s\n", "The channel requested does not exist.");
+			exit(1);
 		}
 	}
 }
@@ -103,7 +107,7 @@ void add_to_relay(struct sockaddr_in *addr)
 			exit(1);
 		}
 	}
-	relay_entries * table_entry = &relay_table[j];
+	relay_entry * table_entry = &relay_table[j];
 	*table_entry.occupied = 1;
 	*table_entry.relay_addr = *addr;
 	*table_entry.relay_addr.sin_port = *table_entry.port_number;
@@ -129,7 +133,14 @@ void serve(int fd, struct sockaddr_in *addr)
 	}
 	printf("connection terminated\n");
 	*/
+	//adding client to relay table
 	add_to_relay(addr);
+	//closing connection to client
+	if (close(fd)==-1)
+	{
+		perror("close");
+		exit(1);
+	}
 }
 
 void setUpServerSocket(int argc, char const *argv[])
@@ -190,7 +201,7 @@ void setUpServerSocket(int argc, char const *argv[])
 				perror("fork");
 				exit(1);
 			case 0:
-				serve(csock, client_addr);
+				serve(csock, &client_addr);
 				break;
 			default:
 				close(csock);

@@ -24,7 +24,8 @@ struct channel {
 void setUpRelayTable(struct relay_entry table[])
 {
 	int capacity = 10;
-	for(int n=0; n<capacity; ++n)
+	int n;
+	for(n=0; n<capacity; ++n)
 	{
 		table[n].position = n;
 		table[n].port_number = 34000+n;
@@ -54,9 +55,10 @@ void setUpChannelTable(struct channel table[])
 	table[8].channel_name = "I";
 	table[9].channel_name = "J";
 	//intializing subscriber relay entries
-	int capacity = 10;
-	for (int i = 0; i < capacity; ++i){
-		for (int j = 0; j < 10; ++j){	
+	const int capacity = 10;
+	int i, j;
+	for (i = 0; i < capacity; ++i){
+		for (j = 0; j < capacity; ++j){	
 			relay_entry * table_entry = &table[i].subscribers[j];
 			table_entry->occupied = 0;
 			table_entry->position = j;
@@ -74,9 +76,9 @@ Below is very rough.
 void subscribe_to_channel(char *chann_req, struct sockaddr_in *subscriber_addr)
 {
 	int capacity = 10;
-	int n = 0;
-	for(n; n<capacity; ++n){
-		if(channel_table[n].channel_name[0]==chann_req[0]){
+	int n;
+	for(n = 0; n<capacity; ++n){
+		if(*channel_table[n].channel_name == *chann_req){
 			int j = 0;
 			while(channel_table[n].subscribers[j].occupied==1){
 				++j;

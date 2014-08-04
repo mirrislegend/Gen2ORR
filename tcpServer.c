@@ -96,7 +96,7 @@ void subscribe_to_channel(char *chann_req, struct sockaddr_in *subscriber_addr)
 	}
 }
 
-int add_to_relay(struct sockaddr_in *addr)
+struct sockaddr_in add_to_relay(struct sockaddr_in *addr)
 {
 	int j = 0;
 	while(relay_table[j].occupied==1){
@@ -111,7 +111,7 @@ int add_to_relay(struct sockaddr_in *addr)
 	table_entry->relay_addr = *addr;
 	table_entry->relay_addr.sin_port = table_entry->port_number;
 
-	return table_entry->port_number;
+	return table_entry->relay_addr;
 }
 
 
@@ -135,13 +135,23 @@ void serve(int fd, struct sockaddr_in *addr)
 	printf("connection terminated\n");
 	*/
 	//adding client to relay table and obtaining new port for allocation
-	int allocated_port = add_to_relay(addr);
+	struct sockaddr_in new_addr = add_to_relay(addr);
+	int allocated_port = new_addr.port_number;
+
+	/*
+	after adding client to the relay, code the server sending a message to the client informing them of the need to switch port. This new allocated port can be accessed from allocated_port - the port number of the sock address returned by add_to_relay().
+	*/
+	
 	//closing connection to client
 	if (close(fd)==-1)
 	{
 		perror("close");
 		exit(1);
 	}
+
+	/*
+	By now, a new connection should have been established with the client using the new port number. This is where we ask the client for which channel they would like to broadcast on. Once we have this we then call subscribe_to_channel using this channel and the address stored in new_addr above.
+	*/
 }
 
 void setUpServerSocket(int argc, char const *argv[])

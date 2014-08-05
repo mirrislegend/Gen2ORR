@@ -7,6 +7,40 @@
 #include <netdb.h>
 #include <string.h>
 
+int client_serve(int new_pn, struct sockaddr_in *server_addr, int sock)
+{
+	printf("Client will now comminucate along port: %d\n", new_pn);
+
+	//closing the connection to the old socket
+	if (close(sock)==-1)
+	{
+		perror("close");
+		exit(1);
+	}
+	printf("Connection with %d is terminated\n", ntohs(server_addr->sin_port));
+
+	//changing port number
+	server_addr->sin_port = htons(new_pn);
+
+	//setting up new socket
+	if ((new_sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+		perror("socket");
+		exit(1);
+	}
+
+	//connecting to new socket
+	if (connect(new_sock, (struct sockaddr *)&server_addr,
+		sizeof(server_addr)) < 0) {
+		perror("connect");
+		exit(1);
+	}
+	/*
+	At this point, you will want to have code that confirms the client can now communicate along the new socket. Think of reading and writing.
+	Also, we return the new socket because its use will probably come in handy later.
+	*/
+	return new_sock;
+}
+
 int main(int argc, char *argv[]) {
 	struct sockaddr_in server_addr;
 	int sock;
@@ -46,21 +80,16 @@ int main(int argc, char *argv[]) {
 		exit(1);
 	}
 
-	//display the prompt the first time
-	if (write(STDOUT_FILENO, "Enter text: ", 12)<0) {
-				perror("Error in writing the prompt"); 
-				exit(1);
+	//giving the client a new port number to comminucate through
+	int new_port_number;
+	if (read(sock, &new_port_number, sizeof(new_port_number))==-1)
+	{
+		perror("read");
+		exit(1);
 	}
-	// Step 4: send data to the server
-	while(fgets(buf, 1024, stdin) != 0) {
-		if (write(STDOUT_FILENO, "Enter text: ", 12)<0) {
-				perror("Error in writing the prompt"); 
-				exit(1);
-		}
-		if (write(sock, buf, strlen(buf)) < 0) {
-			perror("write");
-			exit(1);
-		}
-	}
+
+	//where the magic happens
+	int new_fd = client_serve(new_port_number, &server_addr, sock);
+
 	return(0);
 }

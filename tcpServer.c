@@ -67,12 +67,6 @@ void setUpChannelTable(struct channel table[])
 	}
 }
 
-/*
-Below is very rough.
-1. We need to handle our errors better. What happens when the requested channel is full? Do forward the subscriber to another channel?
-2. Secondly, we have issues with addresses. Is the address of a subscriber in the channel table meant to be that client's original address or the address given to them in the relay table?
-3. Does this all mean that clients have to be written whole new addresses? I don't see how this is possible
-*/
 void subscribe_to_channel(char *chann_req, struct sockaddr_in *subscriber_addr)
 {
 	int capacity = 10;
@@ -149,6 +143,27 @@ void serve(int fd, struct sockaddr_in *addr)
 	if (listen(relay_socket, 5)==-1)
 	{
 		perror("listen");
+		exit(1);
+	}
+
+	//accepting new connection to new socket
+	while (1) {
+		int csock;
+		struct sockaddr_in client_addr;
+		socklen_t client_len = sizeof(client_addr);
+		if(csock = accept(relay_socket,
+			(struct sockaddr *)&client_addr, &client_len)==-1)
+		{
+			perror("accept");
+			exit(1);
+		}
+		printf("Received connection from %s\n",		
+			inet_ntoa(client_addr.sin_addr));
+
+	//testing new socket connection by writing to its socket
+	if(write(csock, &tempnum, sizeof(tempnum))==-1)
+	{
+		perror("write");
 		exit(1);
 	}
 

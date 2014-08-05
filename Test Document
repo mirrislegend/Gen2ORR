@@ -1,0 +1,19 @@
+Tests For Rendezvous Server
+
+//SERVER SIDE CODE\\
+
+1. Hard code relay-entry and enter it into the relay_table. Print the entry's port number to show the system works.
+
+2. Call setUpRelayTable and then print each entry's port number
+
+3. Test the add_to_relay method by creating a faux address and then printing the address and/or port number.
+
+4. Test serve and setUpServerSocket
+
+5. Check on client side by comparing port numbers to make sure the port numbers have actually been changed
+
+//CLIENT SIDE CODE\\
+
+1. Test line 91, that is, make sure the read() function call that returns the port number actually works
+
+2. Call client_serve and see whether it works?

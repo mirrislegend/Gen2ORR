@@ -117,35 +117,38 @@ struct sockaddr_in add_to_relay(struct sockaddr_in *addr)
 
 void serve(int fd, struct sockaddr_in *addr)
 {	
-	/*
-	char buf[1024];
-	int count;
-	while((count = read(fd, buf, 1024))>0){
-		if (write(1, buf, count)==-1)
-		{
-			perror("write");
-			exit(1);
-		}
-	}
-	if (count == -1)
+	//setting up new socket for relay
+	int relay_socket;
+	if (relay_socket = socket(AF_INET, SOCK_STREAM, 0)<0)
 	{
-		perror("read");
+		perror("socket");
 		exit(1);
 	}
-	printf("connection terminated\n");
-	*/
+
 	//adding client to relay table and obtaining new port for allocation
 	struct sockaddr_in new_addr = add_to_relay(addr);
 	int allocated_port = new_addr.port_number;
+	printf("Client will now be given the new port number on which to connect: %d\n", allocated_port);
 
-	/*
-	after adding client to the relay, code the server sending a message to the client informing them of the need to switch port. This new allocated port can be accessed from allocated_port - the port number of the sock address returned by add_to_relay().
-	*/
-	
-	//closing connection to client
-	if (close(fd)==-1)
+	//writing the new port number to the client while handling possible errors
+	int tempnum = htonl(allocated_port);
+	if(write(fd, &tempnum, sizeof(tempnum))==-1)
 	{
-		perror("close");
+		perror("write");
+		exit(1);
+	}
+
+	//binding new address to the new socket
+	if (bind(relay_socket, (struct sockaddr *)&new_addr, sizeof(new_addr)) < 0) 
+	{
+		perror("bind");
+		exit(1);
+	}
+
+	//put new socket into listening mode
+	if (listen(relay_socket, 5)==-1)
+	{
+		perror("listen");
 		exit(1);
 	}
 

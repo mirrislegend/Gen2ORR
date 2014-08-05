@@ -34,10 +34,16 @@ int client_serve(int new_pn, struct sockaddr_in *server_addr, int sock)
 		perror("connect");
 		exit(1);
 	}
-	/*
-	At this point, you will want to have code that confirms the client can now communicate along the new socket. Think of reading and writing.
-	Also, we return the new socket because its use will probably come in handy later.
-	*/
+
+	//confirmation of new connection
+	int conn_port;
+	if (read(new_sock, &conn_port, sizeof(conn_port))==-1)
+	{
+		perror("read");
+		exit(1);
+	}
+	printf("Successfully connected to relay along port number: %d\n", conn_port);
+
 	return new_sock;
 }
 

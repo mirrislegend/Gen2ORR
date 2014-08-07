@@ -7,21 +7,39 @@
 #include <arpa/inet.h>
 #include <string.h>
 
-//setting up relay table
-struct relay_entry {
-	const int position;
-	struct sockaddr_in relay_addr;
-	const int port_number;
-	int occupied;
-}relay_table[10];
 
-//setting up channel table
-struct channel {
-	const char *channel_name;
-	struct relay_entry subscribers[10];
-}channel_table[10];
+int main(int argc, char *argv[])
+{
+	//relay entries
+	typedef struct {
+		int position;
+		struct sockaddr_in relay_addr;
+		int port_number;
+		int occupied;
+	} relay_entry;
+	relay_entry relay_table[10];
 
-void setUpRelayTable(struct relay_entry table[])
+	//channels
+	typedef struct {
+		char *channel_name;
+		relay_entry subscribers[10];
+	} channel;
+	channel channel_table[10];
+
+	void setUpRelayTable(relay_entry []);
+	void setUpChannelTable(channel[]);
+	void setUpServerSocket(int, char**);
+
+	//setting up
+	setUpRelayTable(relay_table);
+	setUpChannelTable(channel_table);
+	setUpServerSocket(argc, argv);
+	
+	return 0;
+}
+
+//"relay entry" = "entry in relay table"
+void setUpRelayTable(relay_entry *table[])
 {
 	int capacity = 10;
 	int n;
@@ -32,7 +50,7 @@ void setUpRelayTable(struct relay_entry table[])
 		table[n].occupied = 0;
 
 		/*
-		keep an eye on first parameter of the memset method below, the & is gone because table_entry is already an adress
+		keep an eye on first parameter of the memset method below, the & is gone because table_entry is already an address
 		*/
 		memset(&table[n].relay_addr, 0, sizeof(table[n].relay_addr));
 		table[n].relay_addr.sin_family = AF_INET;
@@ -41,8 +59,9 @@ void setUpRelayTable(struct relay_entry table[])
 	}
 }
 
-void setUpChannelTable(struct channel table[])
+void setUpChannelTable(channel *table[])
 {
+	
 	//setting up the channel names
 	table[0].channel_name = "A";
 	table[1].channel_name = "B";
@@ -67,6 +86,8 @@ void setUpChannelTable(struct channel table[])
 	}
 }
 
+//this method is not called in the code written in this file
+/*
 void subscribe_to_channel(char *chann_req, struct sockaddr_in *subscriber_addr)
 {
 	int capacity = 10;
@@ -86,11 +107,14 @@ void subscribe_to_channel(char *chann_req, struct sockaddr_in *subscriber_addr)
 			table_entry->relay_addr = *subscriber_addr;
 			table_entry->port_number = ntohs(subscriber_addr->relay_addr.sin_port);
 			break;
+
 		}
 	}
 }
+*/
 
-struct sockaddr_in add_to_relay(struct sockaddr_in *addr)
+//add to relay table
+struct sockaddr_in add_to_relay(sockaddr_in *addr)
 {
 	int j = 0;
 	while(relay_table[j].occupied==1){
@@ -109,7 +133,7 @@ struct sockaddr_in add_to_relay(struct sockaddr_in *addr)
 }
 
 
-void serve(int fd, struct sockaddr_in *addr)
+void serve(int fd, sockaddr_in *addr)
 {	
 	//setting up new socket for relay
 	int relay_socket;
@@ -169,6 +193,7 @@ void serve(int fd, struct sockaddr_in *addr)
 
 	/*
 	By now, a new connection should have been established with the client using the new port number. This is where we ask the client for which channel they would like to broadcast on. Once we have this we then call subscribe_to_channel using this channel and the address stored in new_addr above.
+
 	*/
 }
 
@@ -237,14 +262,4 @@ void setUpServerSocket(int argc, char const *argv[])
 				break;
 		}
 	}
-}
-
-int main(int argc, char const *argv[])
-{
-	//setting up
-	setUpRelayTable(relay_table);
-	setUpChannelTable(channel_table);
-	setUpServerSocket(argc, argv);
-	
-	return 0;
 }

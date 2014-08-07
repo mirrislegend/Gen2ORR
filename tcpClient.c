@@ -23,6 +23,7 @@ int client_serve(int new_pn, struct sockaddr_in *server_addr, int sock)
 	server_addr->sin_port = htons(new_pn);
 
 	//setting up new socket
+	int new_sock;
 	if ((new_sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
 		perror("socket");
 		exit(1);
@@ -52,7 +53,7 @@ int main(int argc, char *argv[]) {
 	int sock;
 	struct hostent *hostinfo;
 
-	char buf[1024];
+	//char buf[1024];
 	if (argc != 3) {
 		fprintf(stderr, "Usage: client host port\n");
 		exit(1);
@@ -95,7 +96,10 @@ int main(int argc, char *argv[]) {
 	}
 
 	//where the magic happens
-	int new_fd = client_serve(new_port_number, &server_addr, sock);
+	int new_fd;
+	new_fd = client_serve(new_port_number, &server_addr, sock);
 
-	return(0);
+	write(new_fd, "Data!", strlen("Data!"));
+
+	return 0;
 }

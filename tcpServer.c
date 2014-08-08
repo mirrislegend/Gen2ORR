@@ -32,7 +32,7 @@
 
 
 //"relay entry" = "entry in relay table"
-void setUpRelayTable(relay_entry *table[])
+void setUpRelayTable(relay_entry table[])
 {
 	int capacity = 10;
 	int n;
@@ -52,7 +52,7 @@ void setUpRelayTable(relay_entry *table[])
 	}
 }
 
-void setUpChannelTable(channel *table[])
+void setUpChannelTable(channel table[])
 {
 	
 	//setting up the channel names
@@ -190,7 +190,7 @@ void serve(int fd, struct sockaddr_in *addr)
 	By now, a new connection should have been established with the client using the new port number. This is where we ask the client for which channel they would like to broadcast on. Once we have this we then call subscribe_to_channel using this channel and the address stored in new_addr above.
 
 	*/
-}
+}}
 
 void setUpServerSocket(int argc, char const *argv[])
 {
@@ -246,7 +246,7 @@ void setUpServerSocket(int argc, char const *argv[])
 		printf("Received connection from %s\n", inet_ntoa(client_addr.sin_addr));
 
 		//forking
-		switch(fork()
+		switch(fork())
 		{
 			case -1:
 				perror("fork");
@@ -259,14 +259,14 @@ void setUpServerSocket(int argc, char const *argv[])
 				break;
 		}
 	}
-}}
+}
 
-int main(int argc, char *argv[])
+int main(int argc, char const *argv[])
 {
 
 	void setUpRelayTable(relay_entry[]);
 	void setUpChannelTable(channel[]);
-	void setUpServerSocket(int, char**);
+	void setUpServerSocket(int, char const **);
 
 	//setting up
 	setUpRelayTable(relay_table);
@@ -275,3 +275,4 @@ int main(int argc, char *argv[])
 	
 	return 0;
 }
+

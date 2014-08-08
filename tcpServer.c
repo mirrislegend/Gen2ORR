@@ -7,41 +7,32 @@
 #include <arpa/inet.h>
 #include <string.h>
 
-
-int main(int argc, char *argv[])
-{
-	//relay entries
-	typedef struct relay_entry {
+//relay entries
+	typedef struct {
 		int position;
 		struct sockaddr_in relay_addr;
 		int port_number;
 		int occupied;
-	} relay_table[10];
+	} relay_entry;
+
+	relay_entry relay_table[10];
 	
 
 	//channels
-	typedef struct channel{
+	typedef struct{
 		char *channel_name;
-		struct relay_entry subscribers[10];
-	} channel_table[10];
+		relay_entry subscribers[10];
+	} channel;
 
+	channel channel_table[10];
 
-	void setUpRelayTable(struct relay_entry []);
-	void setUpChannelTable(struct channel[]);
-	void setUpServerSocket(int, char**);
-
-
-
-	//setting up
-	setUpRelayTable(relay_table);
-	setUpChannelTable(channel_table);
-	setUpServerSocket(argc, argv);
 	
-	return 0;
-}
+
+
+
 
 //"relay entry" = "entry in relay table"
-void setUpRelayTable(struct relay_entry *table[])
+void setUpRelayTable(relay_entry *table[])
 {
 	int capacity = 10;
 	int n;
@@ -61,7 +52,7 @@ void setUpRelayTable(struct relay_entry *table[])
 	}
 }
 
-void setUpChannelTable(struct channel *table[])
+void setUpChannelTable(channel *table[])
 {
 	
 	//setting up the channel names
@@ -141,7 +132,7 @@ void serve(int fd, struct sockaddr_in *addr)
 {	
 	//setting up new socket for relay
 	int relay_socket;
-	if (relay_socket = socket(AF_INET, SOCK_STREAM, 0)<0)
+	if ((relay_socket = socket(AF_INET, SOCK_STREAM, 0))<0)
 	{
 		perror("socket");
 		exit(1);
@@ -149,7 +140,7 @@ void serve(int fd, struct sockaddr_in *addr)
 
 	//adding client to relay table and obtaining new port for allocation
 	struct sockaddr_in new_addr = add_to_relay(addr);
-	int allocated_port = new_addr.port_number;
+	int allocated_port = new_addr.sin_port;
 	printf("Client will now be given the new port number on which to connect: %d\n", allocated_port);
 
 	//writing the new port number to the client while handling possible errors
@@ -179,8 +170,8 @@ void serve(int fd, struct sockaddr_in *addr)
 		int csock;
 		struct sockaddr_in client_addr;
 		socklen_t client_len = sizeof(client_addr);
-		if(csock = accept(relay_socket,
-			(struct sockaddr *)&client_addr, &client_len)==-1)
+		if((csock = accept(relay_socket,
+			(struct sockaddr *)&client_addr, &client_len))==-1)
 		{
 			perror("accept");
 			exit(1);
@@ -242,7 +233,8 @@ void setUpServerSocket(int argc, char const *argv[])
 	}
 
 	//accepting connections
-	while(1){
+	while(1)
+	{
 		int csock;
 		struct sockaddr_in client_addr;
 		socklen_t client_len = sizeof(client_addr);
@@ -254,7 +246,8 @@ void setUpServerSocket(int argc, char const *argv[])
 		printf("Received connection from %s\n", inet_ntoa(client_addr.sin_addr));
 
 		//forking
-		switch(fork()){
+		switch(fork()
+		{
 			case -1:
 				perror("fork");
 				exit(1);
@@ -266,4 +259,19 @@ void setUpServerSocket(int argc, char const *argv[])
 				break;
 		}
 	}
+}}
+
+int main(int argc, char *argv[])
+{
+
+	void setUpRelayTable(relay_entry[]);
+	void setUpChannelTable(channel[]);
+	void setUpServerSocket(int, char**);
+
+	//setting up
+	setUpRelayTable(relay_table);
+	setUpChannelTable(channel_table);
+	setUpServerSocket(argc, argv);
+	
+	return 0;
 }

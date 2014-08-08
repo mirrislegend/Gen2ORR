@@ -34,9 +34,10 @@ void setUpRelayTable(relay_entry table[])
 {
 	int capacity = 10;
 	int n;
-	for(n=0; n<capacity; ++n)
+	for(n=0; n<capacity; n++)
 	{
 		table[n].position = n;
+		printf("%d\n", table[n].position);
 		table[n].port_number = 34000+n;
 		table[n].occupied = 0;
 
@@ -109,14 +110,26 @@ void subscribe_to_channel(char *chann_req, struct sockaddr_in *subscriber_addr)
 //add to relay table
 struct sockaddr_in add_to_relay(struct sockaddr_in *addr)
 {
+
+	//relay_table[0].occupied=1;
+	//relay_table[1].occupied=1;
+	//relay_table[2].occupied=1;
+	
 	int j = 0;
-	while(relay_table[j].occupied==1){
-		++j;
-		if(j==10){
+	//printf("%d\n", relay_table[j].position);
+	while(relay_table[j].occupied==1)
+	{
+		j++;
+		//printf("%d\n", relay_table[j].position);		
+		if(j==10)
+		{
 			fprintf(stderr, "%s\n", "The relay is full.");
 			exit(1);
 		}
 	}
+	
+	//printf("%d",j);
+
 	relay_entry * table_entry = &relay_table[j];
 	table_entry->occupied = 1;
 	table_entry->relay_addr = *addr;
@@ -140,13 +153,13 @@ void serve(int fd, struct sockaddr_in *addr)
 	}
 
 	//adding client to relay table and obtaining new port for allocation
+//Increment error is somewhere between here *********************
 	struct sockaddr_in new_addr = add_to_relay(addr);
 	int x = new_addr.sin_port;
 	int allocated_port = ntohs(x);
 	printf("Client will now be given the new port number on which to connect: %d\n", allocated_port);
 
 	//writing the new port number to the client while handling possible errors
-
 	if(write(fd, &allocated_port, sizeof(allocated_port))==-1)
 	{
 		perror("write");
@@ -159,6 +172,7 @@ void serve(int fd, struct sockaddr_in *addr)
 		perror("bind");
 		exit(1);
 	}
+//and here ************************************
 
 	//put new socket into listening mode
 	if (listen(relay_socket, 5)==-1)

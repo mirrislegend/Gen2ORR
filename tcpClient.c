@@ -9,6 +9,7 @@
 
 int client_serve(int new_pn, struct sockaddr_in *server_addr, int sock)
 {
+	
 	printf("Client will now comminucate along port: %d\n", new_pn);
 
 	//closing the connection to the old socket
@@ -17,10 +18,12 @@ int client_serve(int new_pn, struct sockaddr_in *server_addr, int sock)
 		perror("close");
 		exit(1);
 	}
-	printf("Connection with %d is terminated\n", ntohs(server_addr->sin_port));
+	int x = server_addr->sin_port;
+	printf("Connection with %d is terminated\n", ntohs(x));
 
 	//changing port number
-	server_addr->sin_port = htons(new_pn);
+	x = new_pn;
+	server_addr->sin_port = htons(x);
 
 	//setting up new socket
 	int new_sock;
@@ -29,12 +32,13 @@ int client_serve(int new_pn, struct sockaddr_in *server_addr, int sock)
 		exit(1);
 	}
 
-	//connecting to new socket
-	if (connect(new_sock, (struct sockaddr *)&server_addr,
-		sizeof(server_addr)) < 0) {
+//***	//connecting to new socket
+	if (connect(new_sock, (struct sockaddr *)server_addr,
+		sizeof(*server_addr)) < 0) {
 		perror("connect");
 		exit(1);
 	}
+
 
 	//confirmation of new connection
 	int conn_port;
@@ -94,7 +98,7 @@ int main(int argc, char *argv[]) {
 		perror("read");
 		exit(1);
 	}
-
+	
 	//where the magic happens
 	int new_fd;
 	new_fd = client_serve(new_port_number, &server_addr, sock);

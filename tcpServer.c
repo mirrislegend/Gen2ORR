@@ -37,7 +37,7 @@ void setUpRelayTable(relay_entry table[])
 	for(n=0; n<capacity; n++)
 	{
 		table[n].position = n;
-		printf("%d\n", table[n].position);
+		//printf("%d\n", table[n].position);
 		table[n].port_number = 34000+n;
 		table[n].occupied = 0;
 
@@ -111,16 +111,10 @@ void subscribe_to_channel(char *chann_req, struct sockaddr_in *subscriber_addr)
 struct sockaddr_in add_to_relay(struct sockaddr_in *addr)
 {
 
-	//relay_table[0].occupied=1;
-	//relay_table[1].occupied=1;
-	//relay_table[2].occupied=1;
-	
 	int j = 0;
-	//printf("%d\n", relay_table[j].position);
 	while(relay_table[j].occupied==1)
 	{
-		j++;
-		//printf("%d\n", relay_table[j].position);		
+		j++;		
 		if(j==10)
 		{
 			fprintf(stderr, "%s\n", "The relay is full.");
@@ -153,7 +147,6 @@ void serve(int fd, struct sockaddr_in *addr)
 	}
 
 	//adding client to relay table and obtaining new port for allocation
-//Increment error is somewhere between here *********************
 	struct sockaddr_in new_addr = add_to_relay(addr);
 	int x = new_addr.sin_port;
 	int allocated_port = ntohs(x);
@@ -166,13 +159,15 @@ void serve(int fd, struct sockaddr_in *addr)
 		exit(1);
 	}
 
+//	printf("Did client connect on: %d?\n", allocated_port);
+
 	//binding new address to the new socket
 	if (bind(relay_socket, (struct sockaddr *)&new_addr, sizeof(new_addr)) < 0) 
 	{
 		perror("bind");
 		exit(1);
 	}
-//and here ************************************
+
 
 	//put new socket into listening mode
 	if (listen(relay_socket, 5)==-1)
@@ -192,17 +187,30 @@ void serve(int fd, struct sockaddr_in *addr)
 		perror("accept");
 		exit(1);
 	}
-	printf("Received connection from %s\n",		
+
+	
+	printf("New socket has received connection from %s\n",		
 		inet_ntoa(client_addr.sin_addr));
+
+/*
+	char buff[1024];
+	if (read(csock, buff, sizeof(buff))==-1)
+	{
+		perror("read");
+		exit(1);
+	}
+
+	printf("%s\n", buff);
+*/	
 	
 	//testing new socket connection by writing to its socket
 	//if(write(csock, &tempnum, sizeof(tempnum))==-1)
-	if (write(csock, &allocated_port, sizeof(allocated_port))==-1)
+	/*if (write(csock, &allocated_port, sizeof(allocated_port))==-1)
 	{
 		perror("write");
 		exit(1);
 	}
-
+*/
 	/*
 	By now, a new connection should have been established with the client using the new port number. This is where we ask the client for which channel they would like to broadcast on. Once we have this we then call subscribe_to_channel using this channel and the address stored in new_addr above.
 
@@ -261,6 +269,8 @@ int main(int argc, char const *argv[])
 		perror("listen");
 		exit(1);
 	}
+	
+	printf("Please initialize client now \n");
 
 	//accepting connection
 	while(1)
@@ -283,14 +293,19 @@ int main(int argc, char const *argv[])
 				exit(1);
 			case 0:
 				serve(csock, &client_addr);
+				//closing the connection to the old socket
+				if (close(csock)==-1)
+				{
+					perror("close");
+					exit(1);
+				}
 				break;
 			default:
-				close(csock);
+				return 0;
 				break;
 		}
+		
 	}
-
-	
 	return 0;
 }
 

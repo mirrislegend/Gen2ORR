@@ -7,17 +7,18 @@
 #include <netdb.h>
 #include <string.h>
 
-int client_serve(int new_pn, struct sockaddr_in *server_addr, int sock)
+int client_serve(int new_pn, struct sockaddr_in *server_addr)
 {
 	
 	printf("Client will now comminucate along port: %d\n", new_pn);
 
 	//closing the connection to the old socket
-	if (close(sock)==-1)
+/*	if (close(sock)==-1)
 	{
 		perror("close");
 		exit(1);
 	}
+*/
 	int x = server_addr->sin_port;
 	printf("Connection with %d is terminated\n", ntohs(x));
 
@@ -33,13 +34,14 @@ int client_serve(int new_pn, struct sockaddr_in *server_addr, int sock)
 	}
 
 //***	//connecting to new socket
-	if (connect(new_sock, (struct sockaddr *)server_addr,
-		sizeof(*server_addr)) < 0) {
+	if (connect(new_sock, (struct sockaddr *)server_addr, sizeof(*server_addr)) < 0)
+	{
 		perror("connect");
 		exit(1);
 	}
 
-
+	printf("%d\n", x);
+/*
 	//confirmation of new connection
 	int conn_port;
 	if (read(new_sock, &conn_port, sizeof(conn_port))==-1)
@@ -47,7 +49,10 @@ int client_serve(int new_pn, struct sockaddr_in *server_addr, int sock)
 		perror("read");
 		exit(1);
 	}
-	printf("Successfully connected to relay along port number: %d\n", conn_port);
+*/
+	printf("%d\n", x);
+
+	printf("Successfully connected to relay along port number: %d\n", x);
 
 	return new_sock;
 }
@@ -98,10 +103,12 @@ int main(int argc, char *argv[]) {
 		perror("read");
 		exit(1);
 	}
+
+	
 	
 	//where the magic happens
 	int new_fd;
-	new_fd = client_serve(new_port_number, &server_addr, sock);
+	new_fd = client_serve(new_port_number, &server_addr);
 
 	write(new_fd, "Data!", strlen("Data!"));
 

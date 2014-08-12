@@ -10,10 +10,12 @@ all:
 
 client: $(OBJS)
 	$(CC) $(CFLAGS) $(OBJS) -o client
+	#CTRL + C to quit
 
 server:$(SOBJS)
 	$(CC) $(CFLAGS) $(SOBJS) -o server
-
+	#CTRL + C to quit
+	
 clean:
 	rm -rvf *.o client
 	rm -rvf *.o server

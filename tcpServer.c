@@ -21,13 +21,13 @@ relay_entry relay_table[10];
 //channels
 typedef struct{
 	char *channel_name;
+	char *chanbuff;
 	relay_entry subscribers[10];
 } channel;
 
 channel channel_table[10];
 
-	
-
+int relayflag=0;
 
 //"relay entry" = "entry in relay table"
 void setUpRelayTable(relay_entry table[])
@@ -65,6 +65,7 @@ void setUpChannelTable(channel table[])
 	table[7].channel_name = "H";
 	table[8].channel_name = "I";
 	table[9].channel_name = "J";
+
 	//intializing subscriber relay entries
 	const int capacity = 10;
 	int i, j;
@@ -76,7 +77,10 @@ void setUpChannelTable(channel table[])
 			table_entry->occupied = 0;
 			table_entry->position = j;
 			memset(&table_entry->relay_addr, 0, sizeof(table_entry->relay_addr));
+			
 		}
+		table[i].chanbuff="";
+		
 	}
 }
 
@@ -116,7 +120,8 @@ struct sockaddr_in add_to_relay(struct sockaddr_in *addr)
 	{
 		j++;		
 		if(j==10)
-		{
+		{	
+			relayflag=1;
 			fprintf(stderr, "%s\n", "The relay is full.");
 			exit(1);
 		}
@@ -136,7 +141,7 @@ struct sockaddr_in add_to_relay(struct sockaddr_in *addr)
 
 void serve(int fd, struct sockaddr_in *addr)
 {	
-
+	
 	int relay_socket;	
 
 	//setting up new socket for relay
@@ -192,7 +197,16 @@ void serve(int fd, struct sockaddr_in *addr)
 	printf("New socket has received connection from %s\n",		
 		inet_ntoa(client_addr.sin_addr));
 
-/*
+	
+
+	//testing new socket connection by writing to its socket
+	if (write(csock, &allocated_port, sizeof(allocated_port))==-1)
+	{
+		perror("write");
+		exit(1);
+	}
+
+	//receive a message from client
 	char buff[1024];
 	if (read(csock, buff, sizeof(buff))==-1)
 	{
@@ -201,16 +215,8 @@ void serve(int fd, struct sockaddr_in *addr)
 	}
 
 	printf("%s\n", buff);
-*/	
 	
-	//testing new socket connection by writing to its socket
-	//if(write(csock, &tempnum, sizeof(tempnum))==-1)
-	/*if (write(csock, &allocated_port, sizeof(allocated_port))==-1)
-	{
-		perror("write");
-		exit(1);
-	}
-*/
+
 	/*
 	By now, a new connection should have been established with the client using the new port number. This is where we ask the client for which channel they would like to broadcast on. Once we have this we then call subscribe_to_channel using this channel and the address stored in new_addr above.
 
@@ -222,6 +228,7 @@ void serve(int fd, struct sockaddr_in *addr)
 int main(int argc, char const *argv[])
 {
 
+	
 	void setUpRelayTable(relay_entry[]);
 	void setUpChannelTable(channel[]);
 	
@@ -243,6 +250,7 @@ int main(int argc, char const *argv[])
 	my_addr.sin_port = htons(atoi(argv[1]));
 
 	//error-handling
+	
 	if (argc != 2)
 	{
 		fprintf(stderr, "%s\n", "Usage: server port");
@@ -299,9 +307,14 @@ int main(int argc, char const *argv[])
 					perror("close");
 					exit(1);
 				}
+				if (relayflag == 1)
+				{
+					close(lsock);
+				}
 				break;
 			default:
 				return 0;
+				close(csock);
 				break;
 		}
 		

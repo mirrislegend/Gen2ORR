@@ -40,8 +40,8 @@ int client_serve(int new_pn, struct sockaddr_in *server_addr)
 		exit(1);
 	}
 
-	printf("%d\n", x);
-/*
+	
+
 	//confirmation of new connection
 	int conn_port;
 	if (read(new_sock, &conn_port, sizeof(conn_port))==-1)
@@ -49,10 +49,14 @@ int client_serve(int new_pn, struct sockaddr_in *server_addr)
 		perror("read");
 		exit(1);
 	}
-*/
-	printf("%d\n", x);
+	printf("Successfully connected to relay along port number: %d\n", conn_port);
 
-	printf("Successfully connected to relay along port number: %d\n", x);
+	//send a message to server
+	if (write(new_sock, "Data!", strlen("Data!"))==-1)
+	{
+		perror("write");
+			exit(1);
+	}
 
 	return new_sock;
 }
@@ -110,6 +114,7 @@ int main(int argc, char *argv[]) {
 	int new_fd;
 	new_fd = client_serve(new_port_number, &server_addr);
 
+	//this is never reached
 	write(new_fd, "Data!", strlen("Data!"));
 
 	return 0;

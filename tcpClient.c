@@ -41,7 +41,7 @@ int client_serve(int new_pn, struct sockaddr_in *server_addr)
 	}
 
 	
-
+//everything after this comment thru end of serve method is just proof of basic functions
 	//confirmation of new connection
 	int conn_port;
 	if (read(new_sock, &conn_port, sizeof(conn_port))==-1)
@@ -59,6 +59,9 @@ int client_serve(int new_pn, struct sockaddr_in *server_addr)
 	}
 
 	return new_sock;
+
+
+	
 }
 
 int main(int argc, char *argv[]) {

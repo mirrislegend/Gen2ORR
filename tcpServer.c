@@ -193,7 +193,15 @@ void serve(int fd, struct sockaddr_in *addr)
 		exit(1);
 	}
 
-	
+/*	
+	//communication
+	char buff[1024];
+	while (read(csock, buff, sizeof(buff)==0)
+	{
+		printf("%s\n", buff);
+	}
+*/	
+//everything after this comment thru end of serve method is just proof of basic functions	
 	printf("New socket has received connection from %s\n",		
 		inet_ntoa(client_addr.sin_addr));
 
@@ -215,7 +223,9 @@ void serve(int fd, struct sockaddr_in *addr)
 	}
 
 	printf("%s\n", buff);
-	
+
+
+
 
 	/*
 	By now, a new connection should have been established with the client using the new port number. This is where we ask the client for which channel they would like to broadcast on. Once we have this we then call subscribe_to_channel using this channel and the address stored in new_addr above.

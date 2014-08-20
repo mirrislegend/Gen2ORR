@@ -111,6 +111,8 @@ void subscribe_to_channel(char *chann_req, struct sockaddr_in *subscriber_addr)
 }
 */
 
+
+
 //add to relay table
 struct sockaddr_in add_to_relay(struct sockaddr_in *addr)
 {
@@ -193,14 +195,20 @@ void serve(int fd, struct sockaddr_in *addr)
 		exit(1);
 	}
 
-/*	
-	//communication
-	char buff[1024];
-	while (read(csock, buff, sizeof(buff)==0)
+/*
+lets build the data juggling: fd varies by socket
+
+	
+	while(1)
 	{
-		printf("%s\n", buff);
+		int n;
+		for (n=0; n< ;n++)
+		{
+			
+		}
 	}
-*/	
+*/
+
 //everything after this comment thru end of serve method is just proof of basic functions	
 	printf("New socket has received connection from %s\n",		
 		inet_ntoa(client_addr.sin_addr));

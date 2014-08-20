@@ -7,7 +7,7 @@
 #include <arpa/inet.h>
 #include <string.h>
 
-//derp derp test change
+
 
 //relay entries
 typedef struct {
@@ -238,11 +238,66 @@ lets build the data juggling: fd varies by socket
 
 
 	/*
-	By now, a new connection should have been established with the client using the new port number. This is where we ask the client for which channel they would like to broadcast on. Once we have this we then call subscribe_to_channel using this channel and the address stored in new_addr above.
+	xxBy now, a new connection should have been established with the client using the new port number. This is where we ask the client for which channel they would like to broadcast on. Once we have this we then call subscribe_to_channel using this channel and the address stored in new_addr above.xx
 
 	*/
 }
 
+
+/*
+void channelserve(channel)
+{
+	//entire channel socket is already in channel table
+
+	//putting socket into listening mode
+	if (listen(channel.socket, 5)==-1)
+	{
+		perror("listen");
+		exit(1);
+	}
+	
+	int n;
+	char buff="";
+	while(1)
+	{	
+		
+		int clsock;
+		struct sockaddr_in client_addr;
+		socklen_t client_len = sizeof(client_addr);
+
+		if((clsock = accept(relay_socket, (struct sockaddr *)&client_addr, &client_len))==-1)
+		{
+			perror("accept");
+			exit(1);
+		}
+
+		printf("Received connection from %s.\n", inet_ntoa(client_addr.sin_addr));
+
+		n=add_to_channel(clsock); //return number of members in channel
+
+		for(int i; i<n; i++) //for each member
+		{
+			read(channel.member[i], buff, strlen(buff); //read from that member
+
+			if (buff != "") //if something is read in then
+			{
+				for (int j; j<n; j++) //for each member
+				{
+					if (j!=i) //that is not the member from which material is read
+					{
+						write(channel.member[j], buff, strlen(buff)); //write to that member
+					}
+				}
+			}
+		}
+
+	}
+
+}
+
+*/
+
+//need a new experiment to check on waiting messages: client 1 sends a message and client 2 sends a message. if client 1's message gets read in and then written to everyone, what is on the connection with client 2? does reading from client 2 still yield the client 2 message? does client 2 still receive the client 1 message?
 
 
 int main(int argc, char const *argv[])
@@ -311,7 +366,34 @@ int main(int argc, char const *argv[])
 		csock = accept(lsock, (struct  sockaddr *)&client_addr, &client_len);
 
 		//acknowledgement
-		printf("Received connection from %s\n", inet_ntoa(client_addr.sin_addr));
+		printf("Received connection from %s. Waiting to receive channel.\n", inet_ntoa(client_addr.sin_addr));
+/*
+		//get channel-desired name
+		char buff[2];
+		if (read(csock, buff, sizeof(buff))==-1)
+		{
+			perror("read");
+			exit(1);
+		}
+*/
+		//channel table needs "# occupants" field
+
+		//int n
+		//while n<10
+			//if table[n].channel_name==buff
+				//break
+			//else
+				//n++
+		
+		//if table[n].occupants==zero
+			//write port number of channel to client
+			//fork
+				//channelserve(channel)
+				//close connection
+		//else
+			//write port number of channel to client
+			//close connection
+		
 
 		//forking
 		switch(fork())

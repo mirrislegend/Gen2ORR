@@ -9,49 +9,18 @@
 
 
 
-//relay entries
-typedef struct {
-	int position;
-	struct sockaddr_in relay_addr;
-	int port_number;
-	int occupied;
-} relay_entry;
-
-relay_entry relay_table[10];
-
 
 //channels
 typedef struct{
 	char *channel_name;
+	int channelport;
 	char *chanbuff;
-	relay_entry subscribers[10];
+	int numsub;
+	int subscribers[10]; (file descriptors of sockets)
 } channel;
 
 channel channel_table[10];
 
-int relayflag=0;
-
-//"relay entry" = "entry in relay table"
-void setUpRelayTable(relay_entry table[])
-{
-	int capacity = 10;
-	int n;
-	for(n=0; n<capacity; n++)
-	{
-		table[n].position = n;
-		//printf("%d\n", table[n].position);
-		table[n].port_number = 34000+n;
-		table[n].occupied = 0;
-
-		/*
-		keep an eye on first parameter of the memset method below, the & is gone because table_entry is already an address
-		*/
-		memset(&table[n].relay_addr, 0, sizeof(table[n].relay_addr));
-		table[n].relay_addr.sin_family = AF_INET;
-		table[n].relay_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-		table[n].relay_addr.sin_port = htons(table[n].port_number);
-	}
-}
 
 void setUpChannelTable(channel table[])
 {
@@ -68,19 +37,11 @@ void setUpChannelTable(channel table[])
 	table[8].channel_name = "I";
 	table[9].channel_name = "J";
 
-	//intializing subscriber relay entries
-	const int capacity = 10;
-	int i, j;
+	//intializing channels
+	int i;
 	for (i = 0; i < capacity; ++i)
 	{
-		for (j = 0; j < capacity; ++j)
-		{	
-			relay_entry * table_entry = &table[i].subscribers[j];
-			table_entry->occupied = 0;
-			table_entry->position = j;
-			memset(&table_entry->relay_addr, 0, sizeof(table_entry->relay_addr));
-			
-		}
+		table[i].channelport=3400+i;
 		table[i].chanbuff="";
 		
 	}
@@ -114,7 +75,7 @@ void subscribe_to_channel(char *chann_req, struct sockaddr_in *subscriber_addr)
 */
 
 
-
+/*
 //add to relay table
 struct sockaddr_in add_to_relay(struct sockaddr_in *addr)
 {
@@ -196,7 +157,7 @@ void serve(int fd, struct sockaddr_in *addr)
 		perror("accept");
 		exit(1);
 	}
-
+*/
 /*
 lets build the data juggling: fd varies by socket
 
@@ -216,7 +177,7 @@ lets build the data juggling: fd varies by socket
 		inet_ntoa(client_addr.sin_addr));
 
 	
-
+/*
 	//testing new socket connection by writing to its socket
 	if (write(csock, &allocated_port, sizeof(allocated_port))==-1)
 	{
@@ -234,7 +195,7 @@ lets build the data juggling: fd varies by socket
 
 	printf("%s\n", buff);
 
-
+*/
 
 
 	/*
@@ -243,7 +204,7 @@ lets build the data juggling: fd varies by socket
 	*/
 }
 
-
+/***********************/
 /*
 void channelserve(channel)
 {

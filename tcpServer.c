@@ -8,13 +8,11 @@
 #include <string.h>
 
 
-
-
 //channels
 typedef struct{
 	char *channel_name;
 	int channelport;
-	char *chanbuff;
+	//char *chanbuff;
 	int numsub;
 	int subscribers[10]; (file descriptors of sockets)
 } channel;
@@ -43,6 +41,7 @@ void setUpChannelTable(channel table[])
 	{
 		table[i].channelport=3400+i;
 		table[i].chanbuff="";
+		table[i].numsub=0;
 		
 	}
 }
@@ -74,135 +73,6 @@ void subscribe_to_channel(char *chann_req, struct sockaddr_in *subscriber_addr)
 }
 */
 
-
-/*
-//add to relay table
-struct sockaddr_in add_to_relay(struct sockaddr_in *addr)
-{
-
-	int j = 0;
-	while(relay_table[j].occupied==1)
-	{
-		j++;		
-		if(j==10)
-		{	
-			relayflag=1;
-			fprintf(stderr, "%s\n", "The relay is full.");
-			exit(1);
-		}
-	}
-	
-	//printf("%d",j);
-
-	relay_entry * table_entry = &relay_table[j];
-	table_entry->occupied = 1;
-	table_entry->relay_addr = *addr;
-	int x = table_entry->port_number;
-	table_entry->relay_addr.sin_port = htons(x);
-
-	return table_entry->relay_addr;
-}
-
-
-void serve(int fd, struct sockaddr_in *addr)
-{	
-	
-	int relay_socket;	
-
-	//setting up new socket for relay
-	if ((relay_socket = socket(AF_INET, SOCK_STREAM, 0))<0)
-	{
-		perror("socket");
-		exit(1);
-	}
-
-	//adding client to relay table and obtaining new port for allocation
-	struct sockaddr_in new_addr = add_to_relay(addr);
-	int x = new_addr.sin_port;
-	int allocated_port = ntohs(x);
-	printf("Client will now be given the new port number on which to connect: %d\n", allocated_port);
-
-	//writing the new port number to the client while handling possible errors
-	if(write(fd, &allocated_port, sizeof(allocated_port))==-1)
-	{
-		perror("write");
-		exit(1);
-	}
-
-//	printf("Did client connect on: %d?\n", allocated_port);
-
-	//binding new address to the new socket
-	if (bind(relay_socket, (struct sockaddr *)&new_addr, sizeof(new_addr)) < 0) 
-	{
-		perror("bind");
-		exit(1);
-	}
-
-
-	//put new socket into listening mode
-	if (listen(relay_socket, 5)==-1)
-	{
-		perror("listen");
-		exit(1);
-	}
-
-	//accepting new connection to new socket
-
-	int csock;
-	struct sockaddr_in client_addr;
-	socklen_t client_len = sizeof(client_addr);
-	if((csock = accept(relay_socket,
-		(struct sockaddr *)&client_addr, &client_len))==-1)
-	{
-		perror("accept");
-		exit(1);
-	}
-*/
-/*
-lets build the data juggling: fd varies by socket
-
-	
-	while(1)
-	{
-		int n;
-		for (n=0; n< ;n++)
-		{
-			
-		}
-	}
-*/
-
-//everything after this comment thru end of serve method is just proof of basic functions	
-	printf("New socket has received connection from %s\n",		
-		inet_ntoa(client_addr.sin_addr));
-
-	
-/*
-	//testing new socket connection by writing to its socket
-	if (write(csock, &allocated_port, sizeof(allocated_port))==-1)
-	{
-		perror("write");
-		exit(1);
-	}
-
-	//receive a message from client
-	char buff[1024];
-	if (read(csock, buff, sizeof(buff))==-1)
-	{
-		perror("read");
-		exit(1);
-	}
-
-	printf("%s\n", buff);
-
-*/
-
-
-	/*
-	xxBy now, a new connection should have been established with the client using the new port number. This is where we ask the client for which channel they would like to broadcast on. Once we have this we then call subscribe_to_channel using this channel and the address stored in new_addr above.xx
-
-	*/
-}
 
 /***********************/
 /*
@@ -242,13 +112,7 @@ void channelserve(channel)
 
 			if (buff != "") //if something is read in then
 			{
-				for (int j; j<n; j++) //for each member
-				{
-					if (j!=i) //that is not the member from which material is read
-					{
-						write(channel.member[j], buff, strlen(buff)); //write to that member
-					}
-				}
+				chanbuff=buff;
 			}
 		}
 

@@ -8,17 +8,22 @@
 #include <string.h>
 
 
+//queue
+
 //channels
 typedef struct{
 	char *channel_name;
 	int channelport;
-	//char *chanbuff;
+	//struct chansocket
+	char *chanbuff;
 	int numsub;
 	int subscribers[10]; (file descriptors of sockets)
 } channel;
 
 channel channel_table[10];
 
+//reader
+//constantly reads a channel member
 
 void setUpChannelTable(channel table[])
 {
@@ -36,12 +41,12 @@ void setUpChannelTable(channel table[])
 	table[9].channel_name = "J";
 
 	//intializing channels
-	int i;
-	for (i = 0; i < capacity; ++i)
+	for (int i = 0; i < capacity; ++i)
 	{
 		table[i].channelport=3400+i;
 		table[i].chanbuff="";
 		table[i].numsub=0;
+		//and make a socket
 		
 	}
 }
@@ -80,39 +85,31 @@ void channelserve(channel)
 {
 	//entire channel socket is already in channel table
 
-	//putting socket into listening mode
-	if (listen(channel.socket, 5)==-1)
-	{
-		perror("listen");
-		exit(1);
-	}
-	
-	int n;
-	char buff="";
+	int n=0;
 	while(1)
 	{	
 		
-		int clsock;
-		struct sockaddr_in client_addr;
-		socklen_t client_len = sizeof(client_addr);
-
-		if((clsock = accept(relay_socket, (struct sockaddr *)&client_addr, &client_len))==-1)
+		for (int i=0; i<n, i++) //for each member
 		{
-			perror("accept");
-			exit(1);
-		}
-
-		printf("Received connection from %s.\n", inet_ntoa(client_addr.sin_addr));
-
-		n=add_to_channel(clsock); //return number of members in channel
-
-		for(int i; i<n; i++) //for each member
-		{
-			read(channel.member[i], buff, strlen(buff); //read from that member
-
-			if (buff != "") //if something is read in then
+			if(read(channel.member[i], chanbuff, strlen(chanbuff)<0) //read from that member
 			{
-				chanbuff=buff;
+				perror("read");
+				exit(1);
+			}
+
+			if(chanbuff!="") //if something is read in
+			{
+				for (int j=0; j<n, j++) //for each member
+				{
+					if (j!=i) //that is not the current member
+					{
+						if (write(channel.member[j], chanbuff, strlen(chanbuff)<0) //write to that member
+						{
+							perror ("read");
+							exit(1);
+						}
+					}
+				}
 			}
 		}
 
@@ -123,23 +120,20 @@ void channelserve(channel)
 */
 
 //need a new experiment to check on waiting messages: client 1 sends a message and client 2 sends a message. if client 1's message gets read in and then written to everyone, what is on the connection with client 2? does reading from client 2 still yield the client 2 message? does client 2 still receive the client 1 message?
-
+//that works!
 
 int main(int argc, char const *argv[])
 {
-
-	
-	void setUpRelayTable(relay_entry[]);
+	//declaring variables and methods for later use
+	int lsock;
 	void setUpChannelTable(channel[]);
 	
 
 	//setting up
-	setUpRelayTable(relay_table);
 	setUpChannelTable(channel_table);
 
 
-	//declaring variables and methods for later use
-	int lsock;
+	
 
 	//setting up our address
 	struct sockaddr_in my_addr;
@@ -150,7 +144,6 @@ int main(int argc, char const *argv[])
 	my_addr.sin_port = htons(atoi(argv[1]));
 
 	//error-handling
-	
 	if (argc != 2)
 	{
 		fprintf(stderr, "%s\n", "Usage: server port");
@@ -194,7 +187,7 @@ int main(int argc, char const *argv[])
 		printf("Received connection from %s. Waiting to receive channel.\n", inet_ntoa(client_addr.sin_addr));
 /*
 		//get channel-desired name
-		char buff[2];
+		char *buff;
 		if (read(csock, buff, sizeof(buff))==-1)
 		{
 			perror("read");
@@ -209,41 +202,44 @@ int main(int argc, char const *argv[])
 				//break
 			//else
 				//n++
-		
-		//if table[n].occupants==zero
-			//write port number of channel to client
-			//fork
-				//channelserve(channel)
-				//close connection
-		//else
-			//write port number of channel to client
-			//close connection
-		
 
-		//forking
-		switch(fork())
+		//put channel socket into listening mode
+		//putting socket into listening mode
+		if (listen(table[n].chansocket, 5)==-1)
 		{
-			case -1:
-				perror("fork");
-				exit(1);
-			case 0:
-				serve(csock, &client_addr);
-				//closing the connection to the old socket
-				if (close(csock)==-1)
-				{
-					perror("close");
-					exit(1);
-				}
-				if (relayflag == 1)
-				{
-					close(lsock);
-				}
-				break;
-			default:
-				return 0;
-				close(csock);
-				break;
+			perror("listen");
+			exit(1);
 		}
+
+		//send port number of channel to client
+		if (write(csock, table[n].channelport, strlen(table[n].channelport))<0)
+		{
+			perror("write");
+			exit(1);
+		}
+
+		close(csock);
+
+		//accept client's connection to channel's port
+		csock=accept(table[n].channelsocket, (struct  sockaddr *)&client_addr, &client_len);
+		
+		//subscribe to channel		
+
+		
+		//if table[n].occupants==1
+			//fork
+			switch (fork())
+			{
+				case -1:
+					perror("fork");
+					exit(1);
+				case 0:
+					channelserve(table[n]);
+				default:
+					return 0;
+					break;
+
+			}
 		
 	}
 	return 0;

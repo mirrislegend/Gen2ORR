@@ -47,9 +47,8 @@
  
 
  
-
+//link
 struct my_struct
-
 {
 
   int num;
@@ -61,21 +60,22 @@ struct my_struct
  
 
  
-
+//list
 struct my_list
-
 {
 
-  struct my_struct* head;
+	struct my_struct* head;
 
-  struct my_struct* tail;
+	struct my_struct* tail;
+
+//	int members=0;
 
 };
 
  
 
  
-
+//methods
 struct my_list* list_add_element( struct my_list*, const int);
 
 struct my_list* list_remove_element( struct my_list*);
@@ -97,7 +97,7 @@ void list_print_element(const struct my_struct* );
  
 
  
-
+//main
 int main(void)
 
 {

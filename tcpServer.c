@@ -22,8 +22,6 @@ typedef struct{
 
 channel channel_table[10];
 
-//reader
-//constantly reads a channel member
 
 void setUpChannelTable(channel table[])
 {
@@ -47,6 +45,10 @@ void setUpChannelTable(channel table[])
 		table[i].chanbuff="";
 		table[i].numsub=0;
 		//and make a socket
+		for (intj; j<10; j++)
+		{
+			table[i].subscriber[j]=0;
+		}
 		
 	}
 }
@@ -77,7 +79,59 @@ void subscribe_to_channel(char *chann_req, struct sockaddr_in *subscriber_addr)
 	}
 }
 */
+/********************************/
+/* my subscribe to channel
+void subscribe_to_channel(struct channel, int clsock)
+{
 
+	//put channel socket into listening mode
+	//putting socket into listening mode
+	if (listen(channel.chansocket, 5)==-1)
+	{
+		perror("listen");
+		exit(1);
+	}
+
+	//send port number of channel to client
+	if (write(clsock, channel.channelport, strlen(channel.channelport))<0)
+	{
+		perror("write");
+		exit(1);
+	}
+
+	close(clsock);
+
+	//accept client's connection to channel's port
+	clsock=accept(channel.channelsocket, (struct  sockaddr *)&client_addr, &client_len);
+
+	int capacity=10;
+	int n=0;
+	while(1) //find an open slot
+	{
+		if (channel.subscribers[n]=0)
+		{
+			channel.subscribers[n]=clsock;
+			break;
+		}
+		else
+		{
+			n++;
+		}
+	}
+
+	
+	
+}
+
+
+*/
+
+/*
+void leave_channel(int clsock)
+{
+	overwrite slot with zero
+}
+*/
 
 /***********************/
 /*
@@ -131,8 +185,6 @@ int main(int argc, char const *argv[])
 
 	//setting up
 	setUpChannelTable(channel_table);
-
-
 	
 
 	//setting up our address
@@ -203,27 +255,9 @@ int main(int argc, char const *argv[])
 			//else
 				//n++
 
-		//put channel socket into listening mode
-		//putting socket into listening mode
-		if (listen(table[n].chansocket, 5)==-1)
-		{
-			perror("listen");
-			exit(1);
-		}
-
-		//send port number of channel to client
-		if (write(csock, table[n].channelport, strlen(table[n].channelport))<0)
-		{
-			perror("write");
-			exit(1);
-		}
-
-		close(csock);
-
-		//accept client's connection to channel's port
-		csock=accept(table[n].channelsocket, (struct  sockaddr *)&client_addr, &client_len);
-		
+			
 		//subscribe to channel		
+//		subscribe_to_channel(table[n], csock);
 
 		
 		//if table[n].occupants==1

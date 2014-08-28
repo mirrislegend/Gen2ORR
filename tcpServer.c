@@ -8,16 +8,14 @@
 #include <string.h>
 
 
-//queue
-
 //channels
 typedef struct{
 	char *channel_name;
 	int channelport;
-	//struct chansocket
+	struct sockaddr_in channel_addr;
 	char *chanbuff;
 	int numsub;
-	int subscribers[10]; (file descriptors of sockets)
+	int subscriber[10]; //(file descriptors of sockets)
 } channel;
 
 channel channel_table[10];
@@ -25,6 +23,8 @@ channel channel_table[10];
 
 void setUpChannelTable(channel table[])
 {
+
+	int capacity = 10;
 	
 	//setting up the channel names
 	table[0].channel_name = "A";
@@ -45,7 +45,7 @@ void setUpChannelTable(channel table[])
 		table[i].chanbuff="";
 		table[i].numsub=0;
 		//and make a socket
-		for (intj; j<10; j++)
+		for (int j; j<10; j++)
 		{
 			table[i].subscriber[j]=0;
 		}
@@ -80,20 +80,12 @@ void subscribe_to_channel(char *chann_req, struct sockaddr_in *subscriber_addr)
 }
 */
 /********************************/
-/* my subscribe to channel
-void subscribe_to_channel(struct channel, int clsock)
+//my subscribe to channel
+void subscribe_to_channel(channel c, int clsock)
 {
 
-	//put channel socket into listening mode
-	//putting socket into listening mode
-	if (listen(channel.chansocket, 5)==-1)
-	{
-		perror("listen");
-		exit(1);
-	}
-
 	//send port number of channel to client
-	if (write(clsock, channel.channelport, strlen(channel.channelport))<0)
+	if (write(clsock, c.channelport, strlen(c.channelport))<0)
 	{
 		perror("write");
 		exit(1);
@@ -102,15 +94,15 @@ void subscribe_to_channel(struct channel, int clsock)
 	close(clsock);
 
 	//accept client's connection to channel's port
-	clsock=accept(channel.channelsocket, (struct  sockaddr *)&client_addr, &client_len);
+	clsock=accept(c.channelsocket, (struct  sockaddr *)&client_addr, &client_len);
 
-	int capacity=10;
+
 	int n=0;
 	while(1) //find an open slot
 	{
-		if (channel.subscribers[n]=0)
+		if (c.subscriber[n]=0)
 		{
-			channel.subscribers[n]=clsock;
+			c.subscriber[n]=clsock;
 			break;
 		}
 		else
@@ -118,13 +110,10 @@ void subscribe_to_channel(struct channel, int clsock)
 			n++;
 		}
 	}
-
-	
-	
 }
 
 
-*/
+
 
 /*
 void leave_channel(int clsock)
@@ -134,10 +123,18 @@ void leave_channel(int clsock)
 */
 
 /***********************/
-/*
-void channelserve(channel)
+
+void channelserve(channel c)
 {
 	//entire channel socket is already in channel table
+
+
+	//put channel socket into listening mode
+	if (listen(c.chansocket, 5)==-1)
+	{
+		perror("listen");
+		exit(1);
+	}
 
 	int n=0;
 	while(1)
@@ -145,19 +142,19 @@ void channelserve(channel)
 		
 		for (int i=0; i<n, i++) //for each member
 		{
-			if(read(channel.member[i], chanbuff, strlen(chanbuff)<0) //read from that member
+			if(read(c.subscriber[i], c.chanbuff, strlen(c.chanbuff)<0) //read from that member
 			{
 				perror("read");
 				exit(1);
 			}
 
-			if(chanbuff!="") //if something is read in
+			if(c.chanbuff!="") //if something is read in
 			{
 				for (int j=0; j<n, j++) //for each member
 				{
 					if (j!=i) //that is not the current member
 					{
-						if (write(channel.member[j], chanbuff, strlen(chanbuff)<0) //write to that member
+						if (write(c.subscriber[j], chanbuff, strlen(chanbuff)<0) //write to that member
 						{
 							perror ("read");
 							exit(1);
@@ -171,7 +168,7 @@ void channelserve(channel)
 
 }
 
-*/
+
 
 //need a new experiment to check on waiting messages: client 1 sends a message and client 2 sends a message. if client 1's message gets read in and then written to everyone, what is on the connection with client 2? does reading from client 2 still yield the client 2 message? does client 2 still receive the client 1 message?
 //that works!
@@ -246,7 +243,7 @@ int main(int argc, char const *argv[])
 			exit(1);
 		}
 */
-		//channel table needs "# occupants" field
+		
 
 		//int n
 		//while n<10
@@ -256,11 +253,10 @@ int main(int argc, char const *argv[])
 				//n++
 
 			
-		//subscribe to channel		
-//		subscribe_to_channel(table[n], csock);
-
 		
-		//if table[n].occupants==1
+
+		//channel table needs "# occupants" field		
+		//if table[n].occupants==0
 			//fork
 			switch (fork())
 			{
@@ -268,8 +264,10 @@ int main(int argc, char const *argv[])
 					perror("fork");
 					exit(1);
 				case 0:
-					channelserve(table[n]);
+					channelserve(table[n]);	
+					//subscribe_to_channel(table[n], csock);
 				default:
+					//subscribe_to_channel(table[n], csock);
 					return 0;
 					break;
 

@@ -40,22 +40,11 @@ int client_serve(int new_pn, struct sockaddr_in *server_addr)
 		exit(1);
 	}
 
-	
-//everything after this comment thru end of serve method is just proof of basic functions
-	//confirmation of new connection
-	int conn_port;
-	if (read(new_sock, &conn_port, sizeof(conn_port))==-1)
-	{
-		perror("read");
-		exit(1);
-	}
-	printf("Successfully connected to relay along port number: %d\n", conn_port);
-
-	//send a message to server
-	if (write(new_sock, "Data!", strlen("Data!"))==-1)
+	char chan[256]="A";
+	if(write(new_sock, chan, strlen(chan))<0)
 	{
 		perror("write");
-			exit(1);
+		exit(1);
 	}
 
 	return new_sock;
@@ -69,7 +58,7 @@ int main(int argc, char *argv[]) {
 	int sock;
 	struct hostent *hostinfo;
 
-	//char buf[1024];
+	
 	if (argc != 3) {
 		fprintf(stderr, "Usage: client host port\n");
 		exit(1);
@@ -103,13 +92,28 @@ int main(int argc, char *argv[]) {
 		exit(1);
 	}
 
+	//get desired channel from user
+	//send desired channel to server
+	char buff[1024];
+	printf("%s", "Input desired channel: ");
+	fgets(buff, 1024, stdin);
+	if( write(sock, buff, strlen(buff)) <0)
+	{
+		perror ("write");
+		exit(1);
+	}
+
 	//giving the client a new port number to comminucate through
 	int new_port_number;
-	if (read(sock, &new_port_number, sizeof(new_port_number))==-1)
+	int x;
+	if (read(sock, &x, sizeof(x))==-1)
 	{
 		perror("read");
 		exit(1);
 	}
+
+	
+	new_port_number=htons(x);
 
 	
 	

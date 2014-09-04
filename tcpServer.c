@@ -10,7 +10,7 @@
 
 //channels
 typedef struct{
-	char *channel_name;
+	int channel_name;
 	int channelport;
 	struct sockaddr_in channel_addr;
 	int channelsocket;
@@ -32,21 +32,21 @@ void setUpChannelTable(channel table[])
 	int capacity = 10;
 	
 	//setting up the channel names
-	table[0].channel_name = "A";
-	table[1].channel_name = "B";
-	table[2].channel_name = "C";
-	table[3].channel_name = "D";
-	table[4].channel_name = "E";
-	table[5].channel_name = "F";
-	table[6].channel_name = "G";
-	table[7].channel_name = "H";
-	table[8].channel_name = "I";
-	table[9].channel_name = "J";
+	table[0].channel_name = 1;
+	table[1].channel_name = 2;
+	table[2].channel_name = 3;
+	table[3].channel_name = 4;
+	table[4].channel_name = 5;
+	table[5].channel_name = 6;
+	table[6].channel_name = 7;
+	table[7].channel_name = 8;
+	table[8].channel_name = 9;
+	table[9].channel_name = 10;
 
 	//intializing channels
 	for (int i = 0; i < capacity; ++i) //each channel has
 	{
-		table[i].channelport=3400+i; //a port number
+		table[i].channelport=34000+i; //a port number
 		table[i].chanbuff="";		//a buffer
 		table[i].numsub=0;		//a count of the number of subscribers
 
@@ -114,7 +114,7 @@ void subscribe_to_channel(char *chann_req, struct sockaddr_in *subscriber_addr)
 //my subscribe to channel
 void subscribe_to_channel(channel c, int clsock)
 {
-	int x = htonl(c.channelport);
+	int x = htons(c.channelport);
 
 	//send port number of channel to client
 	if (write(clsock, &x, sizeof(x))<0)
@@ -161,6 +161,8 @@ void leave_channel(int clsock)
 void channelserve(channel c)
 {
 	//entire channel socket is already in channel table
+
+	printf("%s", "you've reached the channelserve method! hooray!");
 
 	int n=0;
 	while(1)
@@ -272,10 +274,13 @@ int main(int argc, char const *argv[])
 			exit(1);
 		}
 		
+
+		printf("%s\n", buff);
+		
 		int n=0;
 		while (n<10)
 		{
-			if (table[n].channel_name==buff)
+			if (table[n].channel_name==atoi(buff))
 			{
 				break;
 			}
@@ -284,6 +289,9 @@ int main(int argc, char const *argv[])
 				n++;
 			}
 		}
+
+
+		printf("%d", table[n].channelport);
 			
 		subscribe_to_channel(table[n], csock);
 			

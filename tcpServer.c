@@ -274,7 +274,6 @@ int main(int argc, char const *argv[])
 			exit(1);
 		}
 		
-
 		printf("%s\n", buff);
 		
 		int n=0;
@@ -291,11 +290,12 @@ int main(int argc, char const *argv[])
 		}
 
 
-		printf("%d", table[n].channelport);
+		printf("%d \n", table[n].channelport);
 			
 		subscribe_to_channel(table[n], csock);
 			
-	
+		printf("%s", "About to enter fork \n");
+
 		//fork
 		switch (fork())
 		{
@@ -303,6 +303,7 @@ int main(int argc, char const *argv[])
 				perror("fork");
 				exit(1);
 			case 0:
+				printf("%s", "About to enter channelserve \n");
 				channelserve(table[n]);	
 			default:
 			

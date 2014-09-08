@@ -162,7 +162,8 @@ void channelserve(channel c)
 {
 	//entire channel socket is already in channel table
 
-	printf("%s", "you've reached the channelserve method! hooray!");
+	printf("%s \n", "you've reached the channelserve method! hooray!");
+	
 
 	int n=0;
 	while(1)
@@ -170,11 +171,13 @@ void channelserve(channel c)
 		
 		for (int i=0; i<n; i++) //for each member
 		{
+			printf("Read from member %d \n", i);			
 			if(read(c.subscriber[i], c.chanbuff, strlen(c.chanbuff))<0) //read from that member
 			{
 				perror("read");
 				exit(1);
 			}
+			 
 
 			if(strcmp(c.chanbuff,"") != 0) //if something is read in
 			{
@@ -182,11 +185,13 @@ void channelserve(channel c)
 				{
 					if (j!=i) //that is not the current member
 					{
+						printf("Write to member %d \n", j);
 						if (write(c.subscriber[j], c.chanbuff, strlen(c.chanbuff))<0) //write to that member
 						{
 							perror ("read");
 							exit(1);
 						}
+						
 					}
 				}
 			}
@@ -268,13 +273,17 @@ int main(int argc, char const *argv[])
 
 		//get channel-desired name
 		char buff[256];
-		if (read(csock, buff, sizeof(buff))==-1)
+		int size;
+		size=read(csock, buff, sizeof(buff));
+		if (size<0)
 		{
 			perror("read");
 			exit(1);
 		}
+		buff[size]='\0';
 		
-		printf("%s\n", buff);
+		printf("%s \n", buff); //no newline inserted here because it was read in from user on client side
+
 		
 		int n=0;
 		while (n<10)
@@ -297,18 +306,20 @@ int main(int argc, char const *argv[])
 		printf("%s", "About to enter fork \n");
 
 		//fork
-		switch (fork())
+		//pid_t x =fork();
+		//printf("%d \n", (int)x);
+		int x = fork();
+		switch (x)
 		{
 			case -1:
 				perror("fork");
 				exit(1);
 			case 0:
 				printf("%s", "About to enter channelserve \n");
-				channelserve(table[n]);	
-			default:
-			
-				return 0;
+				channelserve(table[n]);
 				break;
+			default:
+				return 0;
 
 		}
 		

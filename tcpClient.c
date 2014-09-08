@@ -94,8 +94,8 @@ int main(int argc, char *argv[]) {
 	//send desired channel to server
 	char buff[1024];
 	printf("%s", "Input desired channel: ");
-	fgets(buff, 1024, stdin);
-	if( write(sock, buff, strlen(buff)) <0)
+	fgets(buff, 1024, stdin); //gets a newline character
+	if( write(sock, buff, strlen(buff)-1) <0)
 	{
 		perror ("write");
 		exit(1);
@@ -120,7 +120,8 @@ int main(int argc, char *argv[]) {
 		exit(1);
 	}
 
-	
+	printf("%s", "Close connection to rendez socket \n");
+
 	//where the magic happens
 	int new_fd;
 	new_fd = client_serve(new_port_number, &server_addr);

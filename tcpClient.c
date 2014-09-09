@@ -34,7 +34,7 @@ int client_serve(int new_pn, struct sockaddr_in *server_addr)
 		exit(1);
 	}
 
-	printf("%s", "Connected to new socket?");
+	printf("%s \n", "Connected to new socket?");
 /*
 	char chan[256]="A";
 	if(write(new_sock, chan, strlen(chan))<0)
@@ -125,9 +125,11 @@ int main(int argc, char *argv[]) {
 	//where the magic happens
 	int new_fd;
 	new_fd = client_serve(new_port_number, &server_addr);
+	
+	printf("%s \n", "Connected to new socket!");
 
 	//this is where the client sends data regularly to relay
-	//apparently this is never reached
+	printf("%s \n", "Writing test data to channel (aka: the new socket)");
 	write(new_fd, "Data!", strlen("Data!"));
 
 	return 0;

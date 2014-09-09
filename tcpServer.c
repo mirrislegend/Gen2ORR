@@ -144,6 +144,10 @@ void subscribe_to_channel(channel c, int clsock)
 			n++;
 		}
 	}
+
+	
+	c.numsub=c.numsub+1;
+	printf("%d \n", c.numsub);
 }
 
 
@@ -165,10 +169,11 @@ void channelserve(channel c)
 	printf("%s \n", "you've reached the channelserve method! hooray!");
 	
 
-	int n=0;
+	int n=c.numsub;
 	while(1)
 	{	
-		
+		//printf("%s \n", "Start loop for constantly handling channel");
+		//infinite copies of above print statement! hooray!
 		for (int i=0; i<n; i++) //for each member
 		{
 			printf("Read from member %d \n", i);			
@@ -282,7 +287,7 @@ int main(int argc, char const *argv[])
 		}
 		buff[size]='\0';
 		
-		printf("%s \n", buff); //no newline inserted here because it was read in from user on client side
+		printf("%s \n", buff);
 
 		
 		int n=0;
@@ -300,29 +305,38 @@ int main(int argc, char const *argv[])
 
 
 		printf("%d \n", table[n].channelport);
+		printf("Channel %d with port number %d has %d members \n", table[n].channel_name, table[n].channelport, table[n].numsub);
 			
 		subscribe_to_channel(table[n], csock);
 			
-		printf("%s", "About to enter fork \n");
+		
 
 		//fork
 		//pid_t x =fork();
 		//printf("%d \n", (int)x);
-		int x = fork();
-		switch (x)
-		{
-			case -1:
-				perror("fork");
-				exit(1);
-			case 0:
-				printf("%s", "About to enter channelserve \n");
-				channelserve(table[n]);
-				break;
-			default:
-				return 0;
+		//if (table[n].numsub==1)
+		//{
+			//printf("%s \n", "Channel contains the newest member, but no others, therefore about to enter fork");
+			int x = fork();
+			switch (x)
+			{
+				case -1:
+					perror("fork");
+					exit(1);
+				case 0:
+					if(table[n].numsub==1)
+					{
+						printf("%s", "About to enter channelserve \n");
+						channelserve(table[n]);
+					}
+					close(csock);
+					break;
+				default:
+					close(csock);
+					break;
 
-		}
-		
+			}
+		//}
 	}
 	return 0;
 }

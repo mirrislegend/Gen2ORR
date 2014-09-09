@@ -94,7 +94,11 @@ int main(int argc, char *argv[]) {
 	//send desired channel to server
 	char buff[1024];
 	printf("%s", "Input desired channel: ");
-	fgets(buff, 1024, stdin); //gets a newline character
+	if (fgets(buff, 1024, stdin)==NULL) //gets a newline character
+	{
+		perror("fgets");
+		exit(1);
+	}
 	if( write(sock, buff, strlen(buff)-1) <0)
 	{
 		perror ("write");
@@ -130,7 +134,12 @@ int main(int argc, char *argv[]) {
 
 	//this is where the client sends data regularly to relay
 	printf("%s \n", "Writing test data to channel (aka: the new socket)");
-	write(new_fd, "Data!", strlen("Data!"));
+	
+	if(write(new_fd, "Data!", strlen("Data!"))<0)
+	{
+		perror("write");
+		exit(1);
+	}
 
 	return 0;
 }

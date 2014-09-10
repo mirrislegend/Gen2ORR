@@ -16,7 +16,7 @@ typedef struct{
 	int channelsocket;
 	char *chanbuff;
 	int numsub;
-	int subscriber[10]; //(file descriptors of sockets)
+	int subscriber[10]; //(file descriptors of client sockets)
 } channel;
 
 //channel table consists of channels
@@ -24,10 +24,16 @@ typedef struct{
 //channel table[10];
 
 
-//takes in a table of channels. outputs a table of channels
+//takes in a table of channels. mutates table. returns nothing.
 void setUpChannelTable(channel table[])
 //channel_table* setUpChannelTable(channel* table)
 {
+
+	for (int i=0; i<10; i++)
+	{
+		table[i]=(struct channel *) malloc(sizeof(struct channel));
+		//table[i]=(channel *) malloc(sizeof(channel));
+	}
 
 	int capacity = 10;
 	
@@ -44,7 +50,7 @@ void setUpChannelTable(channel table[])
 	table[9].channel_name = 10;
 
 	//intializing channels
-	for (int i = 0; i < capacity; ++i) //each channel has
+	for (int i = 0; i < 10; ++i) //each channel has
 	{
 		table[i].channelport=34000+i; //a port number
 		table[i].chanbuff="";		//a buffer
@@ -76,12 +82,15 @@ void setUpChannelTable(channel table[])
 		}
 
 		//initialize all subscribers to zero
-		for (int j; j<10; j++)
+		for (int j; j<capacity; j++)
 		{
 			table[i].subscriber[j]=0;
 		}
 		
 	}
+	printf("%d \n", table[2].numsub);
+	printf("%d \n", table[2].subscriber[0]);
+	printf("%d \n", table[2].subscriber[1]);
 }
 
 //this method is not called in the code written in this file
@@ -114,6 +123,8 @@ void subscribe_to_channel(char *chann_req, struct sockaddr_in *subscriber_addr)
 //my subscribe to channel
 void subscribe_to_channel(channel c, int clsock)
 {
+
+
 	int x = htons(c.channelport);
 
 	//send port number of channel to client
@@ -123,7 +134,7 @@ void subscribe_to_channel(channel c, int clsock)
 		exit(1);
 	}
 
-	close(clsock);
+//	close(clsock);
 
 	//accept client's connection to channel's socket
 	struct sockaddr_in client_addr;
@@ -145,11 +156,13 @@ void subscribe_to_channel(channel c, int clsock)
 		}
 	}
 
+	printf("%d \n", c.subscriber[0]);
+	printf("%d \n", c.subscriber[1]);
 	
-	c.numsub=c.numsub+1;
-	printf("%d \n", c.numsub);
+	//just subscribed a member, so increment the number of subscribers
+	c.numsub=(c.numsub)+1;
+	
 }
-
 
 
 
@@ -223,6 +236,8 @@ int main(int argc, char const *argv[])
 
 	//setting up
 	setUpChannelTable(&table[0]);
+	printf("%d \n", table[2].subscriber[0]);
+	printf("%d \n", table[2].subscriber[1]);
 	
 
 	//setting up our address
@@ -305,10 +320,16 @@ int main(int argc, char const *argv[])
 
 
 		printf("%d \n", table[n].channelport);
-		printf("Channel %d with port number %d has %d members \n", table[n].channel_name, table[n].channelport, table[n].numsub);
+
+		printf("%d \n", table[n].subscriber[0]);
+		printf("%d \n", table[n].subscriber[1]);
+
+		printf("Channel %d with port number %d has %d members before subscription\n", table[n].channel_name, table[n].channelport, table[n].numsub);
 			
 		subscribe_to_channel(table[n], csock);
-			
+
+		printf("Channel has %d subscribers after subscription of newest member \n", table[n].numsub);
+
 		
 
 		//fork

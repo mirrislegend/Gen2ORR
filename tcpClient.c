@@ -105,7 +105,7 @@ int main(int argc, char *argv[]) {
 		exit(1);
 	}
 
-	//giving the client a new port number to comminucate through
+	//receiving from server a new port number to communicate through
 	int new_port_number;
 	int x;
 	if (read(sock, &x, sizeof(x))==-1)

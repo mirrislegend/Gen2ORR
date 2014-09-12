@@ -31,9 +31,10 @@ void setUpChannelTable(channel table[])
 
 	for (int i=0; i<10; i++)
 	{
-		table[i]=(struct channel *) malloc(sizeof(struct channel));
+		//(table[i])=(channel) malloc(sizeof(channel));
 		//table[i]=(channel *) malloc(sizeof(channel));
 	}
+
 
 	int capacity = 10;
 	
@@ -53,7 +54,8 @@ void setUpChannelTable(channel table[])
 	for (int i = 0; i < 10; ++i) //each channel has
 	{
 		table[i].channelport=34000+i; //a port number
-		table[i].chanbuff="";		//a buffer
+		table[i].chanbuff=malloc(100);		//a buffer //change to dynamic inside malloc: "sizeof"
+		table[i].chanbuff[0] = '\0';
 		table[i].numsub=0;		//a count of the number of subscribers
 
 		//a socket with an address		
@@ -84,7 +86,7 @@ void setUpChannelTable(channel table[])
 		//initialize all subscribers to zero
 		for (int j; j<capacity; j++)
 		{
-			table[i].subscriber[j]=0;
+			table[i].subscriber[j]=0; //why doesn't this assignment stick?
 		}
 		
 	}
@@ -161,6 +163,10 @@ void subscribe_to_channel(channel c, int clsock)
 	
 	//just subscribed a member, so increment the number of subscribers
 	c.numsub=(c.numsub)+1;
+
+	//why does this never increment?
+
+	//try writing a dummy program. all it does is the numsub stuff. see if it pans out the same way
 	
 }
 
@@ -185,8 +191,11 @@ void channelserve(channel c)
 	int n=c.numsub;
 	while(1)
 	{	
-		//printf("%s \n", "Start loop for constantly handling channel");
+		printf("%s \n", "Start loop for constantly handling channel");
 		//infinite copies of above print statement! hooray!
+		//nevermind, no longer reaching this
+		//follow this backwards. it is due to numsub issue in fork
+
 		for (int i=0; i<n; i++) //for each member
 		{
 			printf("Read from member %d \n", i);			
@@ -235,7 +244,7 @@ int main(int argc, char const *argv[])
 	
 
 	//setting up
-	setUpChannelTable(&table[0]);
+	setUpChannelTable(table);
 	printf("%d \n", table[2].subscriber[0]);
 	printf("%d \n", table[2].subscriber[1]);
 	

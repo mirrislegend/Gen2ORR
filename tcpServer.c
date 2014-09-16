@@ -19,83 +19,83 @@ typedef struct{
 	int subscriber[10]; //(file descriptors of client sockets)
 } channel;
 
-//channel table consists of channels
-//channel channel_table[10];
-//channel table[10];
-
 
 //takes in a table of channels. mutates table. returns nothing.
-void setUpChannelTable(channel table[])
-//channel_table* setUpChannelTable(channel* table)
+void setUpChannelTable(channel setTable[])
 {
 
+/*
 	for (int i=0; i<10; i++)
 	{
-		//(table[i])=(channel) malloc(sizeof(channel));
-		//table[i]=(channel *) malloc(sizeof(channel));
+		(table[i])=(channel) malloc(sizeof(channel));
+		table[i]=(channel *) malloc(sizeof(channel));
 	}
+*/
 
-
-	int capacity = 10;
+	
 	
 	//setting up the channel names
-	table[0].channel_name = 1;
-	table[1].channel_name = 2;
-	table[2].channel_name = 3;
-	table[3].channel_name = 4;
-	table[4].channel_name = 5;
-	table[5].channel_name = 6;
-	table[6].channel_name = 7;
-	table[7].channel_name = 8;
-	table[8].channel_name = 9;
-	table[9].channel_name = 10;
+	setTable[0].channel_name = 1;
+	setTable[1].channel_name = 2;
+	setTable[2].channel_name = 3;
+	setTable[3].channel_name = 4;
+	setTable[4].channel_name = 5;
+	setTable[5].channel_name = 6;
+	setTable[6].channel_name = 7;
+	setTable[7].channel_name = 8;
+	setTable[8].channel_name = 9;
+	setTable[9].channel_name = 10;
 
 	//intializing channels
-	for (int i = 0; i < 10; ++i) //each channel has
+	for (int i = 0; i < 10; i++) //each channel has
 	{
-		table[i].channelport=34000+i; //a port number
-		table[i].chanbuff=malloc(100);		//a buffer //change to dynamic inside malloc: "sizeof"
-		table[i].chanbuff[0] = '\0';
-		table[i].numsub=0;		//a count of the number of subscribers
+		setTable[i].channelport=34000+i; //a port number
+		setTable[i].chanbuff=malloc(100);		//a buffer //change to dynamic inside malloc: "sizeof" //not needed if charbuff turned into an array
+		setTable[i].chanbuff[0] = '\0';
+		setTable[i].numsub=0;		//a count of the number of subscribers
 
-		//a socket with an address		
-		if ((table[i].channelsocket=socket(AF_INET, SOCK_STREAM,0)) < 0)
+		//a socket 	
+		if ((setTable[i].channelsocket=socket(AF_INET, SOCK_STREAM,0)) < 0)
 		{
 			perror("socket");
 			exit(1);
 		}
 
-		memset(&(table[i].channel_addr), 0, sizeof(table[i].channel_addr));
-		table[i].channel_addr.sin_family = AF_INET;
-		table[i].channel_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-		table[i].channel_addr.sin_port = htons(table[i].channelport);
+		//with an address	
+		memset(&(setTable[i].channel_addr), 0, sizeof(setTable[i].channel_addr));
+		setTable[i].channel_addr.sin_family = AF_INET;
+		setTable[i].channel_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+		setTable[i].channel_addr.sin_port = htons(setTable[i].channelport);
 
-		if (bind(table[i].channelsocket, (struct sockaddr *)&(table[i].channel_addr), sizeof(table[i].channel_addr)) < 0)
+		if (bind(setTable[i].channelsocket, (struct sockaddr *)&(setTable[i].channel_addr), sizeof(setTable[i].channel_addr)) < 0)
 		{
 			perror("bind");
 			exit(1);
 		}
 
 		//put channel socket into listening mode
-		if (listen(table[i].channelsocket, 5)==-1)
+		if (listen(setTable[i].channelsocket, 5)==-1)
 		{
 			perror("listen");
 			exit(1);
 		}
 
+		int capacity = 10;
+
 		//initialize all subscribers to zero
-		for (int j; j<capacity; j++)
+		for (int j=0; j<capacity; j++)
 		{
-			table[i].subscriber[j]=0; //why doesn't this assignment stick?
+			setTable[i].subscriber[j]=0; //why doesn't this assignment stick?
 		}
 		
 	}
-	printf("%d \n", table[2].numsub);
-	printf("%d \n", table[2].subscriber[0]);
-	printf("%d \n", table[2].subscriber[1]);
+	//printf("%d \n", setTable[2].numsub);
+	//printf("%d \n", setTable[2].subscriber[0]);
+	//printf("%d \n", setTable[2].subscriber[1]);
 }
 
 //this method is not called in the code written in this file
+//this will be used once the other issues are ironed out
 /*
 void subscribe_to_channel(char *chann_req, struct sockaddr_in *subscriber_addr)
 {
@@ -121,11 +121,13 @@ void subscribe_to_channel(char *chann_req, struct sockaddr_in *subscriber_addr)
 	}
 }
 */
-/********************************/
-//my subscribe to channel
+
+
 void subscribe_to_channel(channel c, int clsock)
 {
+	
 
+	printf("%s\n", "entered the subscribe_to_channel method");
 
 	int x = htons(c.channelport);
 
@@ -136,6 +138,8 @@ void subscribe_to_channel(channel c, int clsock)
 		exit(1);
 	}
 
+	printf("%s\n", "wrote to client the socket corresponding to the client's desired channel");	
+
 //	close(clsock);
 
 	//accept client's connection to channel's socket
@@ -143,13 +147,32 @@ void subscribe_to_channel(channel c, int clsock)
 	socklen_t client_len = sizeof(client_addr);
 	clsock=accept(c.channelsocket, (struct  sockaddr *)&client_addr, &client_len);
 
+	
+	printf("%s\n", "Testing connection between channel and client");
 
+	char test[1024];
+	if (read(clsock, test, sizeof(test))<0)
+	{
+		perror("write");
+		exit(1);
+	}
+	printf("%s\n", test);
+	printf("%s\n", "Connection from client to channel functions!");
+
+
+/*
 	int n=0;
 	while(1) //find an open slot
-	{
+	{	
+		printf("%d\n", c.subscriber[n]);
 		if (c.subscriber[n]==0)
 		{
 			c.subscriber[n]=clsock;
+
+			printf("%d \n", c.numsub);
+			c.numsub=(c.numsub)+1;  //just subscribed a member, so increment the number of subscribers
+			printf("%d \n", c.numsub);
+
 			break;
 		}
 		else
@@ -157,16 +180,32 @@ void subscribe_to_channel(channel c, int clsock)
 			n++;
 		}
 	}
+*/
 
-	printf("%d \n", c.subscriber[0]);
-	printf("%d \n", c.subscriber[1]);
+
+	for (int n=0; n<10; n++)
+	{
+		printf("Subscriber in %d slot\n", c.subscriber[n]);
+		if (c.subscriber[n]==0)
+		{
+			c.subscriber[n]=clsock;
+
+			printf("Number of subscribers before incrementing: %d \n", c.numsub);
+			c.numsub=(c.numsub)+1;  //just subscribed a member, so increment the number of subscribers
+			printf("Number of subscribers after incrementing: %d \n", c.numsub);
+
+			break;
+		}
+	}
+
+	//printf("%d \n", c.subscriber[0]);
+	//printf("%d \n", c.subscriber[1]);
 	
-	//just subscribed a member, so increment the number of subscribers
-	c.numsub=(c.numsub)+1;
+	
 
-	//why does this never increment?
+	//why does this never increment? maybe it will be solved when the stored numbers are sorted
 
-	//try writing a dummy program. all it does is the numsub stuff. see if it pans out the same way
+	//try writing a dummy program. all it does is the numsub stuff. see if it pans out the same waysetTable
 	
 }
 
@@ -245,8 +284,8 @@ int main(int argc, char const *argv[])
 
 	//setting up
 	setUpChannelTable(table);
-	printf("%d \n", table[2].subscriber[0]);
-	printf("%d \n", table[2].subscriber[1]);
+	//printf("%d \n", table[2].subscriber[0]);
+	//printf("%d \n", table[2].subscriber[1]);
 	
 
 	//setting up our address

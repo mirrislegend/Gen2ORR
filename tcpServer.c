@@ -24,16 +24,6 @@ typedef struct{
 void setUpChannelTable(channel setTable[])
 {
 
-/*
-	for (int i=0; i<10; i++)
-	{
-		(table[i])=(channel) malloc(sizeof(channel));
-		table[i]=(channel *) malloc(sizeof(channel));
-	}
-*/
-
-	
-	
 	//setting up the channel names
 	setTable[0].channel_name = 1;
 	setTable[1].channel_name = 2;
@@ -67,6 +57,8 @@ void setUpChannelTable(channel setTable[])
 		setTable[i].channel_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 		setTable[i].channel_addr.sin_port = htons(setTable[i].channelport);
 
+
+		//attach 
 		if (bind(setTable[i].channelsocket, (struct sockaddr *)&(setTable[i].channel_addr), sizeof(setTable[i].channel_addr)) < 0)
 		{
 			perror("bind");
@@ -89,9 +81,7 @@ void setUpChannelTable(channel setTable[])
 		}
 		
 	}
-	//printf("%d \n", setTable[2].numsub);
-	//printf("%d \n", setTable[2].subscriber[0]);
-	//printf("%d \n", setTable[2].subscriber[1]);
+
 }
 
 //this method is not called in the code written in this file
@@ -126,7 +116,6 @@ void subscribe_to_channel(char *chann_req, struct sockaddr_in *subscriber_addr)
 int subscribe_to_channel(channel c, int clsock)
 {
 	
-
 	printf("%s\n", "entered the subscribe_to_channel method");
 
 	int x = htons(c.channelport);
@@ -140,7 +129,6 @@ int subscribe_to_channel(channel c, int clsock)
 
 	printf("%s\n", "wrote to client the socket corresponding to the client's desired channel");	
 
-//	close(clsock);
 
 	printf("Socket ID of client when connected to rendezvous: %d \n", clsock);
 
@@ -164,6 +152,8 @@ int subscribe_to_channel(channel c, int clsock)
 
 	return clsock;
 
+//neither of these loops worked. I had to move the functionality into the main method for it to work
+//it is terrible coding practice to do that. but now it works. and all it cost me was my pride.
 /*
 	int n=0;
 	while(1) //find an open slot
@@ -203,14 +193,7 @@ int subscribe_to_channel(channel c, int clsock)
 		}
 	}
 */
-	//printf("%d \n", c.subscriber[0]);
-	//printf("%d \n", c.subscriber[1]);
-	
-	
 
-	//why does this never increment? maybe it will be solved when the stored numbers are sorted
-
-	//try writing a dummy program. all it does is the numsub stuff. see if it pans out the same waysetTable
 	
 }
 
@@ -223,13 +206,14 @@ void leave_channel(int clsock)
 }
 */
 
-/***********************/
+
 
 void channelserve(channel c)
 {
 	//entire channel socket is already in channel table
 
 	printf("%s \n", "you've reached the channelserve method! hooray!");
+	printf("%s \n", "MAKE SURE TO KILL THE SERVER SIDE FIRST");
 	
 
 	int n=c.numsub;
@@ -237,8 +221,6 @@ void channelserve(channel c)
 	{	
 		//printf("%s \n", "Start loop for constantly handling channel");
 		//infinite copies of above print statement! hooray!
-		//nevermind, no longer reaching this
-		//follow this backwards. it is due to numsub issue in fork
 
 		for (int i=0; i<n; i++) //for each member
 		{
@@ -283,14 +265,10 @@ int main(int argc, char const *argv[])
 	int lsock;
 	//channel table[];
 	channel table[10];
-	//void setUpChannelTable(channel variable[]);
-	//void subscribe_to_channel(channel c, int clientsocket);
-	
+
 
 	//setting up
 	setUpChannelTable(table);
-	//printf("%d \n", table[2].subscriber[0]);
-	//printf("%d \n", table[2].subscriber[1]);
 	
 
 	//setting up our address
@@ -391,10 +369,6 @@ int main(int argc, char const *argv[])
 				table[n].subscriber[m]=clsock;
 				printf("Subscriber in %d slot\n", m);
 
-				//printf("Number of subscribers before incrementing: %d \n", c.numsub);
-				//c.numsub=(c.numsub)+1;  //just subscribed a member, so increment the number of subscribers
-				//printf("Number of subscribers after incrementing: %d \n", c.numsub);
-
 				break;
 			}
 		}
@@ -407,32 +381,26 @@ int main(int argc, char const *argv[])
 
 		
 
-		//fork
-		//pid_t x =fork();
-		//printf("%d \n", (int)x);
-		//if (table[n].numsub==1)
-		//{
-			//printf("%s \n", "Channel contains the newest member, but no others, therefore about to enter fork");
-			int x = fork();
-			switch (x)
-			{
-				case -1:
-					perror("fork");
-					exit(1);
-				case 0:
-					if(table[n].numsub==1)
-					{
-						printf("%s", "About to enter channelserve \n");
-						channelserve(table[n]);
-					}
-					close(csock);
-					break;
-				default:
-					close(csock);
-					break;
+		int x = fork();
+		switch (x)
+		{
+			case -1:
+				perror("fork");
+				exit(1);
+			case 0:
+				if(table[n].numsub==1)
+				{
+					printf("%s", "About to enter channelserve \n");
+					channelserve(table[n]);
+				}
+				close(csock);
+				break;
+			default:
+				close(csock);
+				break;
 
-			}
-		//}
+		}
+	
 	}
 	return 0;
 }

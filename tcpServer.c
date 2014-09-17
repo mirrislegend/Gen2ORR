@@ -123,7 +123,7 @@ void subscribe_to_channel(char *chann_req, struct sockaddr_in *subscriber_addr)
 */
 
 
-void subscribe_to_channel(channel c, int clsock)
+int subscribe_to_channel(channel c, int clsock)
 {
 	
 
@@ -142,11 +142,14 @@ void subscribe_to_channel(channel c, int clsock)
 
 //	close(clsock);
 
+	printf("Socket ID of client when connected to rendezvous: %d \n", clsock);
+
 	//accept client's connection to channel's socket
 	struct sockaddr_in client_addr;
 	socklen_t client_len = sizeof(client_addr);
 	clsock=accept(c.channelsocket, (struct  sockaddr *)&client_addr, &client_len);
 
+	printf("Socket ID of client when connected to channel: %d \n", clsock);
 	
 	printf("%s\n", "Testing connection between channel and client");
 
@@ -159,6 +162,7 @@ void subscribe_to_channel(channel c, int clsock)
 	printf("%s\n", test);
 	printf("%s\n", "Connection from client to channel functions!");
 
+	return clsock;
 
 /*
 	int n=0;
@@ -182,22 +186,23 @@ void subscribe_to_channel(channel c, int clsock)
 	}
 */
 
-
+/*
 	for (int n=0; n<10; n++)
 	{
-		printf("Subscriber in %d slot\n", c.subscriber[n]);
+		
 		if (c.subscriber[n]==0)
 		{
 			c.subscriber[n]=clsock;
+			printf("Subscriber in %d slot\n", n);
 
-			printf("Number of subscribers before incrementing: %d \n", c.numsub);
-			c.numsub=(c.numsub)+1;  //just subscribed a member, so increment the number of subscribers
-			printf("Number of subscribers after incrementing: %d \n", c.numsub);
+			//printf("Number of subscribers before incrementing: %d \n", c.numsub);
+			//c.numsub=(c.numsub)+1;  //just subscribed a member, so increment the number of subscribers
+			//printf("Number of subscribers after incrementing: %d \n", c.numsub);
 
 			break;
 		}
 	}
-
+*/
 	//printf("%d \n", c.subscriber[0]);
 	//printf("%d \n", c.subscriber[1]);
 	
@@ -230,14 +235,14 @@ void channelserve(channel c)
 	int n=c.numsub;
 	while(1)
 	{	
-		printf("%s \n", "Start loop for constantly handling channel");
+		//printf("%s \n", "Start loop for constantly handling channel");
 		//infinite copies of above print statement! hooray!
 		//nevermind, no longer reaching this
 		//follow this backwards. it is due to numsub issue in fork
 
 		for (int i=0; i<n; i++) //for each member
 		{
-			printf("Read from member %d \n", i);			
+			//printf("Read from member %d \n", i);			
 			if(read(c.subscriber[i], c.chanbuff, strlen(c.chanbuff))<0) //read from that member
 			{
 				perror("read");
@@ -352,7 +357,7 @@ int main(int argc, char const *argv[])
 		
 		printf("%s \n", buff);
 
-		
+		//find channel to go with desire-channel name
 		int n=0;
 		while (n<10)
 		{
@@ -372,11 +377,33 @@ int main(int argc, char const *argv[])
 		printf("%d \n", table[n].subscriber[0]);
 		printf("%d \n", table[n].subscriber[1]);
 
-		printf("Channel %d with port number %d has %d members before subscription\n", table[n].channel_name, table[n].channelport, table[n].numsub);
+		//printf("Channel %d with port number %d has %d members before subscription\n", table[n].channel_name, table[n].channelport, table[n].numsub);
 			
-		subscribe_to_channel(table[n], csock);
+		printf("Number of subscribers before incrementing: %d \n", table[n].numsub);
 
-		printf("Channel has %d subscribers after subscription of newest member \n", table[n].numsub);
+		int clsock = subscribe_to_channel(table[n], csock);
+
+		for (int m=0; m<10; m++)
+		{
+			
+			if (table[n].subscriber[m]==0)
+			{
+				table[n].subscriber[m]=clsock;
+				printf("Subscriber in %d slot\n", m);
+
+				//printf("Number of subscribers before incrementing: %d \n", c.numsub);
+				//c.numsub=(c.numsub)+1;  //just subscribed a member, so increment the number of subscribers
+				//printf("Number of subscribers after incrementing: %d \n", c.numsub);
+
+				break;
+			}
+		}
+
+		
+		table[n].numsub=(table[n].numsub)+1;  //just subscribed a member, so increment the number of subscribers
+		printf("Number of subscribers after incrementing: %d \n", table[n].numsub);
+
+		//printf("Channel has %d subscribers after subscription of newest member \n", table[n].numsub);
 
 		
 

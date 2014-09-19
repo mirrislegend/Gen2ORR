@@ -141,5 +141,28 @@ int main(int argc, char *argv[]) {
 		exit(1);
 	}
 
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//time to try the real read/write stuff!
+
+	while(1)
+	{
+		printf ("Input message to pass to server: ");
+		char buff[1024];
+		if (fgets(buff, 1024, stdin)==NULL) //gets a newline character
+		{
+			perror("fgets");
+			exit(1);
+		}
+		if( write(sock, buff, strlen(buff)-1) <0)
+		{
+			perror ("write");
+			exit(1);
+		}
+		
+		break;
+	}
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 	return 0;
 }

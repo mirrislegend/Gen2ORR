@@ -14,7 +14,7 @@ typedef struct{
 	int channelport;
 	struct sockaddr_in channel_addr;
 	int channelsocket;
-	char *chanbuff;
+	char chanbuff[1024];
 	int numsub;
 	int subscriber[10]; //(file descriptors of client sockets)
 } channel;
@@ -40,7 +40,7 @@ void setUpChannelTable(channel setTable[])
 	for (int i = 0; i < 10; i++) //each channel has
 	{
 		setTable[i].channelport=34000+i; //a port number
-		setTable[i].chanbuff=malloc(100);		//a buffer //change to dynamic inside malloc: "sizeof" //not needed if charbuff turned into an array
+//a buffer //change to dynamic inside malloc: "sizeof" //not needed if charbuff turned into an array
 		setTable[i].chanbuff[0] = '\0';
 		setTable[i].numsub=0;		//a count of the number of subscribers
 
@@ -224,14 +224,22 @@ void channelserve(channel c)
 
 		for (int i=0; i<n; i++) //for each member
 		{
-			//printf("Read from member %d \n", i);			
-			if(read(c.subscriber[i], c.chanbuff, strlen(c.chanbuff))<0) //read from that member
+			printf("Read from member %d \n", i);	
+			int size;
+			size=read(c.subscriber[i], c.chanbuff, strlen(c.chanbuff));
+			
+			if(size<0) //read from that member
 			{
 				perror("read");
 				exit(1);
 			}
-			 
+			c.chanbuff[size]='\0';		
 
+			printf("%s \n", c.chanbuff);
+			printf("%s \n", "This print statement executes immediately after printing data from client");
+			
+			 
+			/*
 			if(strcmp(c.chanbuff,"") != 0) //if something is read in
 			{
 				for (int j=0; j<n; j++) //for each member
@@ -248,7 +256,10 @@ void channelserve(channel c)
 					}
 				}
 			}
+			*/
+			break;
 		}
+		break;
 
 	}
 

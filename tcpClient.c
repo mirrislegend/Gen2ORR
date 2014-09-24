@@ -35,14 +35,14 @@ int client_serve(int new_pn, struct sockaddr_in *server_addr)
 	}
 
 	printf("%s \n", "Connected to new socket?");
-/*
-	char chan[256]="A";
-	if(write(new_sock, chan, strlen(chan))<0)
+
+	//char chan[]="data";
+	if(write(new_sock, "If you can see this, the client successfully connected to the channel", sizeof("If you can see this, the client successfully connected to the channel"))<0)
 	{
 		perror("write");
 		exit(1);
 	}
-*/
+
 //printf("Connected to socket on channel
 
 	return new_sock;	
@@ -135,12 +135,12 @@ int main(int argc, char *argv[]) {
 	//this is where the client sends data regularly to relay
 	printf("%s \n", "Writing test data to channel (aka: the new socket)");
 	
-	if(write(new_fd, "Data!", strlen("Data!"))<0)
+	if(write(new_fd, "Test data after client_serve", sizeof("Test data after client_serve"))<0)
 	{
 		perror("write");
 		exit(1);
 	}
-
+/*
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //time to try the real read/write stuff!
 
@@ -163,6 +163,6 @@ int main(int argc, char *argv[]) {
 	}
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
+*/
 	return 0;
 }

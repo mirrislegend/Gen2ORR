@@ -16,7 +16,7 @@ typedef struct{
 	int channelsocket;
 	char chanbuff[1024];
 	int numsub;
-	int subscriber[10]; //(file descriptors of client sockets)
+	int subscriber[10]; //file descriptors of client sockets
 } channel;
 
 
@@ -40,8 +40,7 @@ void setUpChannelTable(channel setTable[])
 	for (int i = 0; i < 10; i++) //each channel has
 	{
 		setTable[i].channelport=34000+i; //a port number
-//a buffer //change to dynamic inside malloc: "sizeof" //not needed if charbuff turned into an array
-		setTable[i].chanbuff[0] = '\0';
+		setTable[i].chanbuff[0] = '\0'; //a buffer
 		setTable[i].numsub=0;		//a count of the number of subscribers
 
 		//a socket 	
@@ -58,7 +57,7 @@ void setUpChannelTable(channel setTable[])
 		setTable[i].channel_addr.sin_port = htons(setTable[i].channelport);
 
 
-		//attach 
+		//bind address and socket 
 		if (bind(setTable[i].channelsocket, (struct sockaddr *)&(setTable[i].channel_addr), sizeof(setTable[i].channel_addr)) < 0)
 		{
 			perror("bind");
@@ -77,7 +76,7 @@ void setUpChannelTable(channel setTable[])
 		//initialize all subscribers to zero
 		for (int j=0; j<capacity; j++)
 		{
-			setTable[i].subscriber[j]=0; //why doesn't this assignment stick?
+			setTable[i].subscriber[j]=0;
 		}
 		
 	}
@@ -112,7 +111,7 @@ void subscribe_to_channel(char *chann_req, struct sockaddr_in *subscriber_addr)
 }
 */
 
-
+//this is called by the main method when it is time to subscribe a client to it's desired channel
 int subscribe_to_channel(channel c, int clsock)
 {
 	
@@ -142,18 +141,21 @@ int subscribe_to_channel(channel c, int clsock)
 	printf("%s\n", "Testing connection between channel and client");
 
 	char test[1024];
-	if (read(clsock, test, sizeof(test))<0)
+	int size;
+	size = read(clsock, test, sizeof(test));
+	if (size<0)
 	{
 		perror("write");
 		exit(1);
 	}
-	printf("%s\n", test);
-	printf("%s\n", "Connection from client to channel functions!");
+	test[size]='\0';
+	printf("%s \n", test);
+	//printf("%s \n", "Connection from client to channel functions!");
 
 	return clsock;
 
 //neither of these loops worked. I had to move the functionality into the main method for it to work
-//it is terrible coding practice to do that. but now it works. and all it cost me was my pride.
+//it is terrible coding practice to do that. but now it works. and all it cost me was my integrity.
 /*
 	int n=0;
 	while(1) //find an open slot
@@ -224,21 +226,23 @@ void channelserve(channel c)
 
 		for (int i=0; i<n; i++) //for each member
 		{
-			printf("Read from member %d \n", i);	
+			printf("Read from member number %d \n", i);	
 			int size;
-			size=read(c.subscriber[i], c.chanbuff, strlen(c.chanbuff));
+			size=read(c.subscriber[i], c.chanbuff, sizeof(c.chanbuff)); //read from that member
 			
-			if(size<0) //read from that member
+			if(size<0) //error handling
 			{
 				perror("read");
 				exit(1);
 			}
-			c.chanbuff[size]='\0';		
+			c.chanbuff[size]='\0';	//null terminator
+
+			//c.chanbuff="fake input";	
 
 			printf("%s \n", c.chanbuff);
 			printf("%s \n", "This print statement executes immediately after printing data from client");
 			
-			 
+			
 			/*
 			if(strcmp(c.chanbuff,"") != 0) //if something is read in
 			{
@@ -257,9 +261,10 @@ void channelserve(channel c)
 				}
 			}
 			*/
-			break;
+			sleep(3);//break;
 		}
-		break;
+		sleep(3);
+		//break;
 
 	}
 
@@ -328,12 +333,13 @@ int main(int argc, char const *argv[])
 		socklen_t client_len = sizeof(client_addr);
 
 		//setting up client socket and accepting pending connection
+		//program waits at accept. this means that the primary process of the program halts here, until a client tries to connect to the rendevous socket
 		csock = accept(lsock, (struct  sockaddr *)&client_addr, &client_len);
 
 		//acknowledgement
 		printf("Received connection from %s. Waiting to receive channel.\n", inet_ntoa(client_addr.sin_addr));
 
-		//get channel-desired name
+		//get name from client of channel client desires
 		char buff[256];
 		int size;
 		size=read(csock, buff, sizeof(buff));
@@ -342,9 +348,10 @@ int main(int argc, char const *argv[])
 			perror("read");
 			exit(1);
 		}
-		buff[size]='\0';
-		
-		printf("%s \n", buff);
+		buff[size]='\0'; //need a null terminator for printing purposes and sometimes an implicit one isn't included (sometimes it is included)
+				//adding in this explicit null termintaor just to be safe
+
+		printf("Client wants to be on channel: %s \n", buff);
 
 		//find channel to go with desire-channel name
 		int n=0;
@@ -361,15 +368,14 @@ int main(int argc, char const *argv[])
 		}
 
 
-		printf("%d \n", table[n].channelport);
+		printf("The port number of the desired channel is: %d \n", table[n].channelport);
 
-		printf("%d \n", table[n].subscriber[0]);
-		printf("%d \n", table[n].subscriber[1]);
 
 		//printf("Channel %d with port number %d has %d members before subscription\n", table[n].channel_name, table[n].channelport, table[n].numsub);
 			
-		printf("Number of subscribers before incrementing: %d \n", table[n].numsub);
+		printf("Number of subscribers on that channel before latest client subscribes: %d \n", table[n].numsub);
 
+		//call the subscribe method
 		int clsock = subscribe_to_channel(table[n], csock);
 
 		for (int m=0; m<10; m++)
@@ -378,20 +384,19 @@ int main(int argc, char const *argv[])
 			if (table[n].subscriber[m]==0)
 			{
 				table[n].subscriber[m]=clsock;
-				printf("Subscriber in %d slot\n", m);
+				printf("Subscriber in %d slot of channel \n", m);
 
 				break;
 			}
 		}
-
 		
 		table[n].numsub=(table[n].numsub)+1;  //just subscribed a member, so increment the number of subscribers
-		printf("Number of subscribers after incrementing: %d \n", table[n].numsub);
 
-		//printf("Channel has %d subscribers after subscription of newest member \n", table[n].numsub);
+		printf("Number of subscribers after subscription of latest client: %d \n", table[n].numsub);
+
 
 		
-
+		//fork off a child process
 		int x = fork();
 		switch (x)
 		{
@@ -399,7 +404,7 @@ int main(int argc, char const *argv[])
 				perror("fork");
 				exit(1);
 			case 0:
-				if(table[n].numsub==1)
+				if(table[n].numsub==1) //fork off a child process ONLY when the client that just subscribed is the ONLY subscriber in its channel. This child process will still be running when new clients are subscribed to the channel and no new process is necessary.
 				{
 					printf("%s", "About to enter channelserve \n");
 					channelserve(table[n]);

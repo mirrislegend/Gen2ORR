@@ -14,7 +14,7 @@ typedef struct{
 	int channelport;
 	struct sockaddr_in channel_addr;
 	int channelsocket;
-	char chanbuff[1024];
+	char chanbuff[1024]; //this is where channels will store messages during handoffs between clients
 	int numsub;
 	int subscriber[10]; //file descriptors of client sockets
 } channel;
@@ -115,19 +115,16 @@ void subscribe_to_channel(char *chann_req, struct sockaddr_in *subscriber_addr)
 int subscribe_to_channel(channel c, int clsock)
 {
 	
-	printf("%s\n", "entered the subscribe_to_channel method");
-
-	int x = htons(c.channelport);
+	printf("%s\n", "Entered the subscribe_to_channel method");
 
 	//send port number of channel to client
+	printf("%s\n", "Write, to client, the socket corresponding to the client's desired channel");
+	int x = htons(c.channelport);
 	if (write(clsock, &x, sizeof(x))<0)
 	{
 		perror("write");
 		exit(1);
 	}
-
-	printf("%s\n", "wrote to client the socket corresponding to the client's desired channel");	
-
 
 	printf("Socket ID of client when connected to rendezvous: %d \n", clsock);
 
@@ -140,22 +137,26 @@ int subscribe_to_channel(channel c, int clsock)
 	
 	printf("%s\n", "Testing connection between channel and client");
 
-	char test[1024];
+	char subscribetestbuff[1024];
 	int size;
-	size = read(clsock, test, sizeof(test));
+	size = read(clsock, subscribetestbuff, sizeof(subscribetestbuff));
 	if (size<0)
 	{
 		perror("write");
 		exit(1);
 	}
-	test[size]='\0';
-	printf("%s \n", test);
-	//printf("%s \n", "Connection from client to channel functions!");
+	subscribetestbuff[size]='\0';
+	printf("%s \n", subscribetestbuff);
+
 
 	return clsock;
 
-//neither of these loops worked. I had to move the functionality into the main method for it to work
-//it is terrible coding practice to do that. but now it works. and all it cost me was my integrity.
+}
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//This code was inside the subscribe_to_channel method but neither loop of them worked. 
+//I had to move the functionality into the main method for it to work
+//It is terrible coding practice to do that. but now it works. and all it cost me was my integrity.
+//Hopefully we can put this functionality back in subscribe_to_channel eventually
 /*
 	int n=0;
 	while(1) //find an open slot
@@ -195,9 +196,9 @@ int subscribe_to_channel(channel c, int clsock)
 		}
 	}
 */
-
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	
-}
+
 
 
 
@@ -224,22 +225,30 @@ void channelserve(channel c)
 		//printf("%s \n", "Start loop for constantly handling channel");
 		//infinite copies of above print statement! hooray!
 
-		for (int i=0; i<n; i++) //for each member
+		char servetestbuff[1024];
+
+		for (int i=0; i<n; i++) //for each subscriber
 		{
-			printf("Read from member number %d \n", i);	
+			
+			printf("Read from member number %d on channel with fd number %d\n", i, c.subscriber[i]);	
 			int size;
-			size=read(c.subscriber[i], c.chanbuff, sizeof(c.chanbuff)); //read from that member
+			size=read(c.subscriber[i], servetestbuff, sizeof(servetestbuff)); //read from that subscriber
 			
 			if(size<0) //error handling
 			{
 				perror("read");
 				exit(1);
 			}
-			c.chanbuff[size]='\0';	//null terminator
+			//servetestbuff[size]='\0';	//null terminator
 
-			//c.chanbuff="fake input";	
+			//c.chanbuff="fake input";
 
-			printf("%s \n", c.chanbuff);
+			//strcpy(servetestbuff, "fake input");	
+
+			//printf("%s \n", servetestbuff);
+
+			printf("%d characters were read in \n", size);
+
 			printf("%s \n", "This print statement executes immediately after printing data from client");
 			
 			
@@ -261,10 +270,12 @@ void channelserve(channel c)
 				}
 			}
 			*/
-			sleep(3);//break;
+			//sleep(3);
+			break;
 		}
-		sleep(3);
-		//break;
+		//sleep(3);
+		break;
+
 
 	}
 
@@ -340,24 +351,24 @@ int main(int argc, char const *argv[])
 		printf("Received connection from %s. Waiting to receive channel.\n", inet_ntoa(client_addr.sin_addr));
 
 		//get name from client of channel client desires
-		char buff[256];
+		char mainbuff[256];
 		int size;
-		size=read(csock, buff, sizeof(buff));
+		size=read(csock, mainbuff, sizeof(mainbuff));
 		if (size<0)
 		{
 			perror("read");
 			exit(1);
 		}
-		buff[size]='\0'; //need a null terminator for printing purposes and sometimes an implicit one isn't included (sometimes it is included)
+		mainbuff[size]='\0'; //need a null terminator for printing purposes and sometimes an implicit one isn't included (sometimes it is included)
 				//adding in this explicit null termintaor just to be safe
 
-		printf("Client wants to be on channel: %s \n", buff);
+		printf("Client wants to be on channel: %s \n", mainbuff);
 
 		//find channel to go with desire-channel name
 		int n=0;
 		while (n<10)
 		{
-			if (table[n].channel_name==atoi(buff))
+			if (table[n].channel_name==atoi(mainbuff))
 			{
 				break;
 			}

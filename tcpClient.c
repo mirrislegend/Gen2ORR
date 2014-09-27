@@ -105,7 +105,7 @@ int main(int argc, char *argv[]) {
 		exit(1);
 	}
 
-	//receiving from server a new port number to communicate through
+	//receiving, from server, a new port number to communicate through
 	int new_port_number;
 	int x;
 	if (read(sock, &x, sizeof(x))==-1)
@@ -130,16 +130,25 @@ int main(int argc, char *argv[]) {
 	int new_fd;
 	new_fd = client_serve(new_port_number, &server_addr);
 	
-	printf("%s \n", "Connected to new socket!");
+	printf("Connected to new socket with file descriptor %d \n", new_fd);
 
 	//this is where the client sends data regularly to relay
 	printf("%s \n", "Writing test data to channel (aka: the new socket)");
 	
-	if(write(new_fd, "Test data after client_serve", sizeof("Test data after client_serve"))<0)
+	if(write(new_fd, "first", sizeof("first"))<0)
 	{
 		perror("write");
 		exit(1);
 	}
+
+	if(write(new_fd, "second Test data after client_serve", sizeof("second Test data after client_serve"))<0)
+	{
+		perror("write");
+		exit(1);
+	}
+
+	printf("%s \n", "Sent test data to channel");
+	
 /*
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //time to try the real read/write stuff!
@@ -157,9 +166,7 @@ int main(int argc, char *argv[]) {
 		{
 			perror ("write");
 			exit(1);
-		}
-		
-		break;
+		}		
 	}
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -229,8 +229,11 @@ void channelserve(channel c)
 
 		for (int i=0; i<n; i++) //for each subscriber
 		{
+
+			fflush(stdout);
 			
 			printf("Read from member number %d on channel with fd number %d\n", i, c.subscriber[i]);	
+			
 			int size;
 			size=read(c.subscriber[i], servetestbuff, sizeof(servetestbuff)); //read from that subscriber
 			
@@ -239,6 +242,10 @@ void channelserve(channel c)
 				perror("read");
 				exit(1);
 			}
+			
+			fflush(stdout);
+
+			
 			//servetestbuff[size]='\0';	//null terminator
 
 			//c.chanbuff="fake input";
@@ -252,6 +259,8 @@ void channelserve(channel c)
 			printf("%s \n", "This print statement executes immediately after printing data from client");
 			
 			
+			//this is where the server writes out to the clients the data that was read in
+			//i want to get the reading in part working first before i start writing out
 			/*
 			if(strcmp(c.chanbuff,"") != 0) //if something is read in
 			{

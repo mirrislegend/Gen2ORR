@@ -118,13 +118,13 @@ int main(int argc, char *argv[]) {
 	new_port_number=htons(x);
 
 	//closing the connection to the old socket
-	if (close(sock)==-1)
-	{
-		perror("close");
-		exit(1);
-	}
+//	if (close(sock)==-1)
+//	{
+//		perror("close");
+//		exit(1);
+//	}
 
-	printf("%s", "Close connection to rendez socket \n");
+//	printf("%s", "Close connection to rendez socket \n");
 
 	//where the magic happens
 	int new_fd;
@@ -132,6 +132,16 @@ int main(int argc, char *argv[]) {
 	
 	printf("Connected to new socket with file descriptor %d \n", new_fd);
 
+// // moving this to here didn't change anything
+	//closing the connection to the old socket
+	if (close(sock)==-1)
+	{
+		perror("close");
+		exit(1);
+	}
+
+	printf("%s", "Close connection to rendez socket \n");
+// //
 	//this is where the client sends data regularly to relay
 	printf("%s \n", "Writing test data to channel (aka: the new socket)");
 	

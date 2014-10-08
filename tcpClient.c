@@ -7,6 +7,7 @@
 #include <netdb.h>
 #include <string.h>
 
+
 int client_serve(int new_pn, struct sockaddr_in *server_addr)
 {
 	
@@ -43,8 +44,7 @@ int client_serve(int new_pn, struct sockaddr_in *server_addr)
 		exit(1);
 	}
 
-//printf("Connected to socket on channel
-
+	
 	return new_sock;	
 }
 
@@ -92,7 +92,7 @@ int main(int argc, char *argv[]) {
 
 	//get desired channel from user
 	//send desired channel to server
-	char buff[1024];
+	char buff[128];
 	printf("%s", "Input desired channel: ");
 	if (fgets(buff, 1024, stdin)==NULL) //gets a newline character
 	{
@@ -105,6 +105,8 @@ int main(int argc, char *argv[]) {
 		exit(1);
 	}
 
+	printf("Current client socket's fd is %d \n", sock);
+
 	//receiving, from server, a new port number to communicate through
 	int new_port_number;
 	int x;
@@ -113,18 +115,12 @@ int main(int argc, char *argv[]) {
 		perror("read");
 		exit(1);
 	}
-
 	
 	new_port_number=htons(x);
 
-	//closing the connection to the old socket
-//	if (close(sock)==-1)
-//	{
-//		perror("close");
-//		exit(1);
-//	}
 
-//	printf("%s", "Close connection to rendez socket \n");
+	
+
 
 	//where the magic happens
 	int new_fd;
@@ -132,18 +128,17 @@ int main(int argc, char *argv[]) {
 	
 	printf("Connected to new socket with file descriptor %d \n", new_fd);
 
-// // moving this to here didn't change anything
+	printf("Close connection to rendez socket \n");
 	//closing the connection to the old socket
-	if (close(sock)==-1)
+	if (close(sock)<0)
 	{
 		perror("close");
 		exit(1);
 	}
+	
 
-	printf("%s", "Close connection to rendez socket \n");
-// //
 	//this is where the client sends data regularly to relay
-	printf("%s \n", "Writing test data to channel (aka: the new socket)");
+	printf("%s \n", "Writing test data before fork");
 	
 	if(write(new_fd, "first", sizeof("first"))<0)
 	{
@@ -151,7 +146,7 @@ int main(int argc, char *argv[]) {
 		exit(1);
 	}
 
-	if(write(new_fd, "second Test data after client_serve", sizeof("second Test data after client_serve"))<0)
+	if(write(new_fd, "second", sizeof("second"))<0)
 	{
 		perror("write");
 		exit(1);

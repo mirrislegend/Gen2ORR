@@ -14,7 +14,7 @@ typedef struct{
 	int channelport;
 	struct sockaddr_in channel_addr;
 	int channelsocket;
-	char chanbuff[1024]; //this is where channels will store messages during handoffs between clients
+	char chanbuff[128]; //this is where channels will store messages during handoffs between clients
 	int numsub;
 	int subscriber[10]; //file descriptors of client sockets
 } channel;
@@ -137,7 +137,7 @@ int subscribe_to_channel(channel c, int clsock)
 	
 	printf("%s\n", "Testing connection between channel and client");
 
-	char subscribetestbuff[1024];
+	char subscribetestbuff[128];
 	int size;
 	size = read(clsock, subscribetestbuff, sizeof(subscribetestbuff));
 	if (size<0)
@@ -217,8 +217,21 @@ void channelserve(channel c)
 
 	printf("%s \n", "you've reached the channelserve method! hooray!");
 	printf("%s \n", "MAKE SURE TO KILL THE SERVER SIDE FIRST");
-	
+	printf("%s \n", "attempting to read from client as soon as channelserve is entered");
 
+	char servetestbuff[128];
+	int size;
+	size=read(c.subscriber[0], servetestbuff, sizeof(servetestbuff)); //read from that subscriber
+			
+	if(size<0) //error handling
+	{
+		perror("read");
+		exit(1);
+	}
+
+	printf("%s \n", servetestbuff);
+	
+/*
 	int n=c.numsub;
 	while(1)
 	{	
@@ -253,7 +266,7 @@ void channelserve(channel c)
 			//strcpy(servetestbuff, "fake input");	
 
 			//printf("%s \n", servetestbuff);
-
+*/
 			printf("%d characters were read in \n", size);
 
 			printf("%s \n", "This print statement executes immediately after printing data from client");
@@ -279,14 +292,14 @@ void channelserve(channel c)
 				}
 			}
 			*/
-			//sleep(3);
+/*			//sleep(3);
 			break;
 		}
 		//sleep(3);
 		break;
 
 
-	}
+	}*/
 
 }
 
@@ -360,7 +373,7 @@ int main(int argc, char const *argv[])
 		printf("Received connection from %s. Waiting to receive channel.\n", inet_ntoa(client_addr.sin_addr));
 
 		//get name from client of channel client desires
-		char mainbuff[256];
+		char mainbuff[128];
 		int size;
 		size=read(csock, mainbuff, sizeof(mainbuff));
 		if (size<0)
@@ -368,7 +381,7 @@ int main(int argc, char const *argv[])
 			perror("read");
 			exit(1);
 		}
-		mainbuff[size]='\0'; //need a null terminator for printing purposes and sometimes an implicit one isn't included (sometimes it is included)
+		//mainbuff[size]='\0'; //need a null terminator for printing purposes and sometimes an implicit one isn't included (sometimes it is included)
 				//adding in this explicit null termintaor just to be safe
 
 		printf("Client wants to be on channel: %s \n", mainbuff);
@@ -424,9 +437,14 @@ int main(int argc, char const *argv[])
 				perror("fork");
 				exit(1);
 			case 0:
-				if(table[n].numsub==1) //fork off a child process ONLY when the client that just subscribed is the ONLY subscriber in its channel. This child process will still be running when new clients are subscribed to the channel and no new process is necessary.
+				if(table[n].numsub==1) //fork off a child process ONLY when the client that just subscribed is the ONLY subscriber in its channel. This child process will still be running when new clients are subscribed to the channel and no new process is necessary. (this concept will need eventual updating, when subscribers can leave channels)
 				{
-					printf("%s", "About to enter channelserve \n");
+					printf("%s \n", "Attempt read BEFORE channelserve");
+					int size;
+					char testtest[128];
+					size=read(table[0].subscriber[0], testtest, sizeof(testtest));
+					printf("%d %s \n", size, testtest);
+					printf("About to enter channelserve on channel %d \n", n+1);
 					channelserve(table[n]);
 				}
 				close(csock);

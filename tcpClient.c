@@ -8,13 +8,22 @@
 #include <string.h>
 
 
-int client_serve(int new_pn, struct sockaddr_in *server_addr)
+int client_serve(int new_pn, struct sockaddr_in *server_addr, int currentportnumber)
 {
 	
 	printf("Client will now communicate along port: %d\n", new_pn);
 
 
 	int x = server_addr->sin_port;
+
+	printf("Close connection to rendez socket \n");
+	//closing the connection to the old socket
+	if (close(currentportnumber)<0)
+	{
+		perror("close");
+		exit(1);
+	}	
+
 	printf("Connection with %d is terminated\n", ntohs(x));
 
 	//changing port number
@@ -37,7 +46,8 @@ int client_serve(int new_pn, struct sockaddr_in *server_addr)
 
 	printf("%s \n", "Connected to new socket?");
 
-	//char chan[]="data";
+	//test of new connection
+	//write of r/w #3
 	if(write(new_sock, "If you can see this, the client successfully connected to the channel", sizeof("If you can see this, the client successfully connected to the channel"))<0)
 	{
 		perror("write");
@@ -94,12 +104,14 @@ int main(int argc, char *argv[]) {
 	//send desired channel to server
 	char buff[128];
 	printf("%s", "Input desired channel: ");
+	//acquire input from user for Read/Write pair #1
 	if (fgets(buff, 1024, stdin)==NULL) //gets a newline character
 	{
 		perror("fgets");
 		exit(1);
 	}
-	if( write(sock, buff, strlen(buff)-1) <0)
+	//Write for r/w pair #1
+	if(write(sock, buff, strlen(buff)-1) <0)
 	{
 		perror ("write");
 		exit(1);
@@ -110,6 +122,7 @@ int main(int argc, char *argv[]) {
 	//receiving, from server, a new port number to communicate through
 	int new_port_number;
 	int x;
+	//read for r/w pair #2
 	if (read(sock, &x, sizeof(x))==-1)
 	{
 		perror("read");
@@ -119,25 +132,20 @@ int main(int argc, char *argv[]) {
 	new_port_number=htons(x);
 
 
-	
-
 
 	//where the magic happens
 	int new_fd;
-	new_fd = client_serve(new_port_number, &server_addr);
+	//contains "close" for client side of connection with rendezvous
+	//contains write of r/w #3
+	new_fd = client_serve(new_port_number, &server_addr, sock);
 	
 	printf("Connected to new socket with file descriptor %d \n", new_fd);
 
-	printf("Close connection to rendez socket \n");
-	//closing the connection to the old socket
-	if (close(sock)<0)
-	{
-		perror("close");
-		exit(1);
-	}
+	
 	
 
-	//this is where the client sends data regularly to relay
+	//this is where the client WOULD send data regularly to relay
+	//obviously, that is not happening here yet. Just trying to send stuff from client to server and get that to work
 	printf("%s \n", "Writing test data before fork");
 	
 	if(write(new_fd, "first", sizeof("first"))<0)

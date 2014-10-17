@@ -120,6 +120,7 @@ int subscribe_to_channel(channel c, int clsock)
 	//send port number of channel to client
 	printf("%s\n", "Write, to client, the socket corresponding to the client's desired channel");
 	int x = htons(c.channelport);
+	//write for r/w pair #2
 	if (write(clsock, &x, sizeof(x))<0)
 	{
 		perror("write");
@@ -128,24 +129,30 @@ int subscribe_to_channel(channel c, int clsock)
 
 	printf("Socket ID of client when connected to rendezvous: %d \n", clsock);
 
+	close(clsock);
+
 	//accept client's connection to channel's socket
 	struct sockaddr_in client_addr;
 	socklen_t client_len = sizeof(client_addr);
 	clsock=accept(c.channelsocket, (struct  sockaddr *)&client_addr, &client_len);
 
 	printf("Socket ID of client when connected to channel: %d \n", clsock);
+	printf("These two socket IDs, and the corresponding pair on the client side, \n");
+	printf("     will be the same or increment by one \n");
+	printf("     depending on where the close statement is placed in the client side code \n");
 	
 	printf("%s\n", "Testing connection between channel and client");
 
 	char subscribetestbuff[128];
-	int size;
-	size = read(clsock, subscribetestbuff, sizeof(subscribetestbuff));
-	if (size<0)
+	int size2;
+	//read of r/w #3
+	size2 = read(clsock, subscribetestbuff, sizeof(subscribetestbuff));
+	if (size2<0)
 	{
 		perror("write");
 		exit(1);
 	}
-	subscribetestbuff[size]='\0';
+	//subscribetestbuff[size]='\0';
 	printf("%s \n", subscribetestbuff);
 
 
@@ -199,9 +206,6 @@ int subscribe_to_channel(channel c, int clsock)
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	
 
-
-
-
 /*
 void leave_channel(int clsock)
 {
@@ -210,27 +214,27 @@ void leave_channel(int clsock)
 */
 
 
-
 void channelserve(channel c)
 {
 	//entire channel socket is already in channel table
 
 	printf("%s \n", "you've reached the channelserve method! hooray!");
-	printf("%s \n", "MAKE SURE TO KILL THE SERVER SIDE FIRST");
-	printf("%s \n", "attempting to read from client as soon as channelserve is entered");
+	printf("%s \n\n", "MAKE SURE TO KILL THE SERVER SIDE FIRST");
+	printf("%s \n", "Attempting to read from client as soon as channelserve is entered");
 
 	char servetestbuff[128];
-	int size;
-	size=read(c.subscriber[0], servetestbuff, sizeof(servetestbuff)); //read from that subscriber
+	int size1;
+	size1=read(c.subscriber[0], servetestbuff, sizeof(servetestbuff)); //read from that subscriber
 			
-	if(size<0) //error handling
+	if(size1<0) //error handling
 	{
 		perror("read");
 		exit(1);
 	}
 
-	printf("%s \n", servetestbuff);
-	
+	printf("Characters: %d. Message: %s \n\n", size1, servetestbuff);
+
+//this is the code for continual discussion between client and server. obviously, this stuff is on hold for now
 /*
 	int n=c.numsub;
 	while(1)
@@ -266,11 +270,11 @@ void channelserve(channel c)
 			//strcpy(servetestbuff, "fake input");	
 
 			//printf("%s \n", servetestbuff);
-*/
-			printf("%d characters were read in \n", size);
+
+			printf("%d characters were read in \n", size1);
 
 			printf("%s \n", "This print statement executes immediately after printing data from client");
-			
+*/			
 			
 			//this is where the server writes out to the clients the data that was read in
 			//i want to get the reading in part working first before i start writing out
@@ -373,24 +377,25 @@ int main(int argc, char const *argv[])
 		printf("Received connection from %s. Waiting to receive channel.\n", inet_ntoa(client_addr.sin_addr));
 
 		//get name from client of channel client desires
-		char mainbuff[128];
-		int size;
-		size=read(csock, mainbuff, sizeof(mainbuff));
-		if (size<0)
+		char tempbuff1[128];
+		int size3;
+
+		//Read for read-write pair number 1
+		size3=read(csock, tempbuff1, sizeof(tempbuff1));
+		if (size3<0)
 		{
 			perror("read");
 			exit(1);
 		}
-		//mainbuff[size]='\0'; //need a null terminator for printing purposes and sometimes an implicit one isn't included (sometimes it is included)
-				//adding in this explicit null termintaor just to be safe
-
-		printf("Client wants to be on channel: %s \n", mainbuff);
+		
+		//output to user for r/w #1
+		printf("Client wants to be on channel: %s \n", tempbuff1);
 
 		//find channel to go with desire-channel name
 		int n=0;
 		while (n<10)
 		{
-			if (table[n].channel_name==atoi(mainbuff))
+			if (table[n].channel_name==atoi(tempbuff1))
 			{
 				break;
 			}
@@ -400,16 +405,14 @@ int main(int argc, char const *argv[])
 			}
 		}
 
-
+		//more output to user for r/w #1
 		printf("The port number of the desired channel is: %d \n", table[n].channelport);
 
-
-		//printf("Channel %d with port number %d has %d members before subscription\n", table[n].channel_name, table[n].channelport, table[n].numsub);
 			
 		printf("Number of subscribers on that channel before latest client subscribes: %d \n", table[n].numsub);
 
 		//call the subscribe method
-		int clsock = subscribe_to_channel(table[n], csock);
+		int clsock = subscribe_to_channel(table[n], csock); //contains write of r/w pair #2
 
 		for (int m=0; m<10; m++)
 		{
@@ -425,31 +428,36 @@ int main(int argc, char const *argv[])
 		
 		table[n].numsub=(table[n].numsub)+1;  //just subscribed a member, so increment the number of subscribers
 
-		printf("Number of subscribers after subscription of latest client: %d \n", table[n].numsub);
+		printf("Number of subscribers after subscription of latest client: %d \n\n", table[n].numsub);
 
+		printf("Attempt to read BEFORE fork\n");
+		char tempbuff2[128];
+		int size4;
+		size4=read(clsock, tempbuff2, sizeof(tempbuff2));
+		printf("Characters: %d. Message: %s \n\n", size4, tempbuff2);
 
 		
 		//fork off a child process
 		int x = fork();
 		switch (x)
 		{
-			case -1:
+			case -1: //error
 				perror("fork");
 				exit(1);
-			case 0:
+			case 0: //child
 				if(table[n].numsub==1) //fork off a child process ONLY when the client that just subscribed is the ONLY subscriber in its channel. This child process will still be running when new clients are subscribed to the channel and no new process is necessary. (this concept will need eventual updating, when subscribers can leave channels)
 				{
 					printf("%s \n", "Attempt read BEFORE channelserve");
 					int size;
 					char testtest[128];
 					size=read(table[0].subscriber[0], testtest, sizeof(testtest));
-					printf("%d %s \n", size, testtest);
+					printf("Characters: %d. Message: %s \n\n", size, testtest);
 					printf("About to enter channelserve on channel %d \n", n+1);
 					channelserve(table[n]);
 				}
 				close(csock);
 				break;
-			default:
+			default: //parent
 				close(csock);
 				break;
 

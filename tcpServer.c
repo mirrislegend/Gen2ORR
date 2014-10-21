@@ -430,6 +430,8 @@ int main(int argc, char const *argv[])
 
 		printf("Number of subscribers after subscription of latest client: %d \n\n", table[n].numsub);
 
+		
+		//read/write pair #4
 		printf("Attempt to read BEFORE fork\n");
 		char tempbuff2[128];
 		int size4;

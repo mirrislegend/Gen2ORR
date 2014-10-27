@@ -1,4 +1,6 @@
-Experimenting with a c implementation
+In Linux to compile:
+gcc -o TcpServer TcpServer.c -std+=c99
+gcc -o TcpClient TcpClient.c
 
 To compile:
 Use the make file and run "make all" or individually"make client" and "make server". May need to run "make clean" before

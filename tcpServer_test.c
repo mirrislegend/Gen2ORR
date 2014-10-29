@@ -158,34 +158,6 @@ void printChannelTable(channel setTable[]){
 		//setTable[i].numsub=0;		//a count of the number of subscribers
 }
 
-//this method is not called in the code written in this file
-//this will be used once the other issues are ironed out
-/*
-void subscribe_to_channel(char *chann_req, struct sockaddr_in *subscriber_addr)
-{
-	int capacity = 10;
-	int n;
-	for(n = 0; n<capacity; ++n){
-		if(*channel_table[n].channel_name == *chann_req){
-			int j = 0;
-			while(channel_table[n].subscribers[j].occupied==1){
-				++j;
-				if(j==10){
-					fprintf(stderr, "%s\n", "The requested channel is full.");
-					exit(1);
-				}
-			}
-			relay_entry * table_entry = &channel_table[n].subscribers[j];
-			table_entry->occupied = 1;
-			table_entry->relay_addr = *subscriber_addr;
-			table_entry->port_number = ntohs(subscriber_addr->relay_addr.sin_port);
-			break;
-
-		}
-	}
-}
-*/
-
 //this is called by the main method when it is time to subscribe a client to it's desired channel
 int subscribe_to_channel(channel c, int clsock)
 {
@@ -298,6 +270,7 @@ void channelserve(channel c)
 	printf("%s \n", "Attempting to read from client as soon as channelserve is entered");
 
 	char servetestbuff[128];
+	memset(servetestbuff,'\0',128);
 	int size1;
 	size1=read(c.subscriber[0], servetestbuff, sizeof(servetestbuff)); //read from that subscriber
 			
@@ -387,20 +360,30 @@ void channelserve(channel c)
 //need a new experiment to check on waiting messages: client 1 sends a message and client 2 sends a message. if client 1's message gets read in and then written to everyone, what is on the connection with client 2? does reading from client 2 still yield the client 2 message? does client 2 still receive the client 1 message?
 //that works!
 
-int main(int argc, char const *argv[])
-{
+int main(int argc, char const *argv[]){
+
+	//error-handling
+	if (argc != 2){
+		fprintf(stderr, "%s\n", "Usage: server port");
+		exit(1);
+	}
+
+	// check that arg is an integer
+   	if (atoi(argv[1])==0){
+		fprintf(stderr, "%s\n", "Usage: port must be an integer");
+		exit(1);
+	}
+
 	//declaring variables and methods for later use
 	int lsock;
-	//channel table[];
 	channel table[10];
-
 
 	//setting up
 	setUpChannelTable(table);
-	//print contents of table
-	printChannelTable(table);
-	
 
+	//print contents of table
+	//printChannelTable(table);
+	
 	//setting up our address
 	struct sockaddr_in rendez_addr;
 	memset(&rendez_addr, 0, sizeof(rendez_addr));
@@ -408,13 +391,6 @@ int main(int argc, char const *argv[])
 	rendez_addr.sin_family = AF_INET;
 	rendez_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 	rendez_addr.sin_port = htons(atoi(argv[1]));
-
-	//error-handling
-	if (argc != 2)
-	{
-		fprintf(stderr, "%s\n", "Usage: server port");
-		exit(1);
-	}
 
 	//creating our socket
 	if ((lsock = socket(AF_INET, SOCK_STREAM, 0))<0)
@@ -459,6 +435,7 @@ int main(int argc, char const *argv[])
 
 		//Read for read-write pair number 1
 		size3=read(csock, tempbuff1, sizeof(tempbuff1));
+
 		if (size3<0)
 		{
 			perror("read");
@@ -520,7 +497,7 @@ int main(int argc, char const *argv[])
 		//read/write pair #4
 		char tempbuff2[128] = "XXXXX Alice123456789 XXXXX";
 		int size4;
-		//the problem is here!
+
 		size4=read(clsock, tempbuff2, sizeof(tempbuff2));
 		if (size4<0)
 		{
@@ -532,7 +509,7 @@ int main(int argc, char const *argv[])
 		GetSocketOptions(clsock);		
 
 		//print table contents
-		printChannelTable(table);
+		//printChannelTable(table);
 /*
 	char subscribetestbuff[128];
 	int size2;
@@ -559,6 +536,7 @@ int main(int argc, char const *argv[])
 					printf( ANSI_COLOR_RED "YOU ARE IN CHILD fork" ANSI_COLOR_RESET " for Chan %d\n", atoi(tempbuff1));
 					int size;
 					char testtest[128];
+					memset(testtest,'\0',128);
 					size=read(table[0].subscriber[0], testtest, sizeof(testtest));
 					printf("Characters: %d. Message: %s \n\n", size, testtest);
 					printf("About to enter channelserve on channel %d \n", n+1);

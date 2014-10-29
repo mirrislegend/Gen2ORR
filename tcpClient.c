@@ -51,17 +51,19 @@ int client_serve(int new_pn, struct sockaddr_in *server_addr, int currentportnum
 		exit(1);
 	}
 
-	printf("%s \n", "Connected to new socket?");
+	printf("%s \n", "Connected to new socket");
 
 	//test of new connection
 	//write of r/w #3
-	if(write(new_sock, "If you can see this, the client successfully connected to the channel", sizeof("If you can see this, the client successfully connected to the channel"))<0)
-	{
-		perror("write");
-		exit(1);
-	}
+//	if(write(new_sock, "If you can see this, the client successfully connected to the channel", sizeof("If you can see this, the client successfully connected to the channel"))<0)
+//	{
+//		perror("write");
+//		exit(1);
+//	}
+	//FILE* fp1 = fdopen(new_sock, "w");
+	//fflush(fp1);
 
-	
+
 	return new_sock;	
 }
 
@@ -71,12 +73,20 @@ int main(int argc, char *argv[]) {
 	int sock;
 	struct hostent *hostinfo;
 
-	
 	if (argc != 3) {
 		fprintf(stderr, "Usage: client host port\n");
 		exit(1);
 	}
-
+/*this code doesn't work but we should make sure that the arguments are valid
+   	if (atoi(argv[1])==0 and argv[1]!="localhost" ){
+		fprintf(stderr, "%s\n", "Usage: incorrect host");
+		exit(1);
+	}
+   	if (atoi(argv[2])==0){
+		fprintf(stderr, "%s\n", "Usage: incorrect port");
+		exit(1);
+	}
+*/
 	// set up socket for TCP
 	/*here we do not need to bind() because the address used does not matter
 	to the server */
@@ -155,17 +165,23 @@ int main(int argc, char *argv[]) {
 	//obviously, that is not happening here yet. Just trying to send stuff from client to server and get that to work
 	printf("%s \n", "Writing test data before fork");
 	
-	if(write(new_fd, "first", sizeof("first"))<0)
-	{
-		perror("write");
-		exit(1);
-	}
+	int loopNbr;
+	for(loopNbr = 0; loopNbr != 5; loopNbr++){
+		char sendString[15];
+		sprintf(sendString, "Sending %d", loopNbr);
+		if(write(new_fd, sendString, sizeof(sendString))<0)
+		{
+			perror("write");
+			exit(1);
+		}
+		printf("%s \n", sendString);
+		sleep(1);
+		//FILE* fp2 = fdopen(new_fd, "w");
+		//fflush(fp2);
 
-	if(write(new_fd, "second", sizeof("second"))<0)
-	{
-		perror("write");
-		exit(1);
 	}
+	//FILE* fp3 = fdopen(new_fd, "w");
+	//fflush(fp3);
 
 	printf(ANSI_COLOR_YELLOW "%s \n"ANSI_COLOR_RESET, "Sent test data to channel");
 	//printf(ANSI_COLOR_YELLOW  "%s"  ANSI_COLOR_RESET "\n", "yellow yellow yellow");

@@ -166,7 +166,7 @@ int main(int argc, char *argv[]) {
 	printf("%s \n", "Writing test data before fork");
 	
 	int loopNbr;
-	for(loopNbr = 0; loopNbr != 5; loopNbr++){
+	for(loopNbr = 0; loopNbr != 4; loopNbr++){
 		char sendString[15];
 		sprintf(sendString, "Sending %d", loopNbr);
 		if(write(new_fd, sendString, sizeof(sendString))<0)
@@ -183,7 +183,7 @@ int main(int argc, char *argv[]) {
 	//FILE* fp3 = fdopen(new_fd, "w");
 	//fflush(fp3);
 
-	printf(ANSI_COLOR_YELLOW "%s \n"ANSI_COLOR_RESET, "Sent test data to channel");
+	printf(ANSI_COLOR_GREEN "%s \n"ANSI_COLOR_RESET, "Sent test data to channel");
 	//printf(ANSI_COLOR_YELLOW  "%s"  ANSI_COLOR_RESET "\n", "yellow yellow yellow");
 
 /*

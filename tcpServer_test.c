@@ -115,10 +115,10 @@ void setUpChannelTable(channel setTable[])
 		setTable[i].channel_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 		setTable[i].channel_addr.sin_port = htons(setTable[i].channelport);
 
-
 		//bind address and socket 
 		if (bind(setTable[i].channelsocket, (struct sockaddr *)&(setTable[i].channel_addr), sizeof(setTable[i].channel_addr)) < 0)
 		{
+
 			perror("bind");
 			exit(1);
 		}
@@ -140,8 +140,7 @@ void setUpChannelTable(channel setTable[])
 		
 	}
 	//for debugging:
-	//setTable[1].chanbuff[5] = "init";  
-	strcpy(setTable[1].chanbuff, "initialize");
+	//strcpy(setTable[1].chanbuff, "initialize");
 }
 void printChannelTable(channel setTable[]){
 //print the table contents
@@ -200,7 +199,7 @@ int subscribe_to_channel(channel c, int clsock)
 		exit(1);
 	}
 	//subscribetestbuff[size]='\0';
-	printf("from Client:size: %d  %s \n",size2, subscribetestbuff);
+	printf(ANSI_COLOR_YELLOW"from Client: size: %d  %s"ANSI_COLOR_RESET" \n",size2, subscribetestbuff);
 
 
 	return clsock;
@@ -280,7 +279,7 @@ void channelserve(channel c)
 		exit(1);
 	}
 
-	printf("Characters: %d. Message: %s \n\n", size1, servetestbuff);
+	printf(ANSI_COLOR_YELLOW"Characters: %d. Message: %s"ANSI_COLOR_RESET" \n\n", size1, servetestbuff);
 
 //this is the code for continual discussion between client and server. obviously, this stuff is on hold for now
 /*
@@ -399,12 +398,17 @@ int main(int argc, char const *argv[]){
 		exit(1);
 	}
 
+	// added for debugging
+	//int yes = 1;
+	//setsockopt(lsock, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int) == -1);
+
 	//binding address to socket
 	if(bind(lsock, (struct sockaddr *)&rendez_addr, sizeof(rendez_addr))==-1)
 	{
 		perror("bind");
 		exit(1);
 	}
+
 
 	//putting socket into listening mode
 	if (listen(lsock, 5)==-1)
@@ -493,7 +497,7 @@ int main(int argc, char const *argv[]){
 		printf("Number of subscribers after subscription of latest client: %d \n\n", table[n].numsub);
 
 		
-		GetSocketOptions(clsock);
+		//GetSocketOptions(clsock);
 		//read/write pair #4
 		char tempbuff2[128] = "XXXXX Alice123456789 XXXXX";
 		int size4;
@@ -506,7 +510,7 @@ int main(int argc, char const *argv[]){
 			exit(1);
 		}
 		printf("Attempt to read BEFORE fork:  "ANSI_COLOR_YELLOW "Characters: %d. Message: %s \n" ANSI_COLOR_RESET "\n", size4, tempbuff2);
-		GetSocketOptions(clsock);		
+		//GetSocketOptions(clsock);		
 
 		//print table contents
 		//printChannelTable(table);
@@ -538,7 +542,7 @@ int main(int argc, char const *argv[]){
 					char testtest[128];
 					memset(testtest,'\0',128);
 					size=read(table[0].subscriber[0], testtest, sizeof(testtest));
-					printf("Characters: %d. Message: %s \n\n", size, testtest);
+					printf(ANSI_COLOR_YELLOW "Characters: %d. Message: %s"ANSI_COLOR_RESET" \n\n", size, testtest);
 					printf("About to enter channelserve on channel %d \n", n+1);
 					channelserve(table[n]);
 				}

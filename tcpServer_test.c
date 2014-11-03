@@ -541,7 +541,8 @@ int main(int argc, char const *argv[]){
 					int size;
 					char testtest[128];
 					memset(testtest,'\0',128);
-					size=read(table[0].subscriber[0], testtest, sizeof(testtest));
+					printf("%d \n", table[n].subscriber[0]);
+					size=read(table[n].subscriber[0], testtest, sizeof(testtest));
 					printf(ANSI_COLOR_YELLOW "Characters: %d. Message: %s"ANSI_COLOR_RESET" \n\n", size, testtest);
 					printf("About to enter channelserve on channel %d \n", n+1);
 					channelserve(table[n]);

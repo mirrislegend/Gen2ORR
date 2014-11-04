@@ -1,5 +1,3 @@
-//client with all the lessons learned from tcpServer_test
-
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -9,7 +7,7 @@
 #include <netdb.h>
 #include <string.h>
 
-#define ANSI_COLOR_RED     "\x1b[31m"
+#define ANSI_COLOR_RED     "\x1b[31m" 
 #define ANSI_COLOR_GREEN   "\x1b[32m"
 #define ANSI_COLOR_YELLOW  "\x1b[33m"
 #define ANSI_COLOR_BLUE    "\x1b[34m"
@@ -57,20 +55,18 @@ int client_serve(int new_pn, struct sockaddr_in *server_addr, int currentportnum
 
 	//test of new connection
 	//write of r/w #3
-	if(write(new_sock, "If you can see this, the client successfully connected to the channel", sizeof("If you can see this, the client successfully connected to the channel"))<0)
-	{
-		perror("write");
-		exit(1);
-	}
-
+//	if(write(new_sock, "If you can see this, the client successfully connected to the channel", sizeof("If you can see this, the client successfully connected to the channel"))<0)
+//	{
+//		perror("write");
+//		exit(1);
+//	}
+	//FILE* fp1 = fdopen(new_sock, "w");
+	//fflush(fp1);
 
 
 	return new_sock;	
 }
 
-/////////////////////
-///////////////////
-/////////////////
 
 int main(int argc, char *argv[]) {
 	struct sockaddr_in server_addr;
@@ -91,8 +87,6 @@ int main(int argc, char *argv[]) {
 		exit(1);
 	}
 */
-
-
 	// set up socket for TCP
 	/*here we do not need to bind() because the address used does not matter
 	to the server */
@@ -172,7 +166,7 @@ int main(int argc, char *argv[]) {
 	printf("%s \n", "Writing test data before fork");
 	
 	int loopNbr;
-	for(loopNbr = 0; loopNbr != 4; loopNbr++){
+	for(loopNbr = 0; loopNbr != 5; loopNbr++){
 		char sendString[15];
 		sprintf(sendString, "Sending %d", loopNbr);
 		if(write(new_fd, sendString, sizeof(sendString))<0)
@@ -182,10 +176,12 @@ int main(int argc, char *argv[]) {
 		}
 		printf("%s \n", sendString);
 		sleep(1);
-
+		//FILE* fp2 = fdopen(new_fd, "w");
+		//fflush(fp2);
 
 	}
-
+	//FILE* fp3 = fdopen(new_fd, "w");
+	//fflush(fp3);
 
 	printf(ANSI_COLOR_GREEN "%s \n"ANSI_COLOR_RESET, "Sent test data to channel");
 	//printf(ANSI_COLOR_YELLOW  "%s"  ANSI_COLOR_RESET "\n", "yellow yellow yellow");

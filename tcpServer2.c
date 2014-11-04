@@ -8,6 +8,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <string.h>
+#include <errno.h>  
 
 #define ANSI_COLOR_RED     "\x1b[31m"
 #define ANSI_COLOR_GREEN   "\x1b[32m"
@@ -29,6 +30,8 @@ typedef struct{
 	int subscriber[10]; //file descriptors of client sockets
 } channel;
 
+int subscribe_to_channel(channel c, int clsock);
+void channelserve(channel c);
 
 //takes in a table of channels. mutates table. returns nothing.
 void setUpChannelTable(channel setTable[])
@@ -50,8 +53,8 @@ void setUpChannelTable(channel setTable[])
 	for (int i = 0; i < 10; i++) //each channel has
 	{
 		setTable[i].channelport=34000+i; //a port number
-		setTable[i].chanbuff[0] = '\0'; //a buffer
-		setTable[i].numsub=0;		//a count of the number of subscribers
+		setTable[i].chanbuff[0] = '\0';  //a buffer
+		setTable[i].numsub=0;		 //a count of the number of subscribers
 
 		//a socket 	
 		if ((setTable[i].channelsocket=socket(AF_INET, SOCK_STREAM,0)) < 0)
@@ -66,10 +69,10 @@ void setUpChannelTable(channel setTable[])
 		setTable[i].channel_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 		setTable[i].channel_addr.sin_port = htons(setTable[i].channelport);
 
-
 		//bind address and socket 
 		if (bind(setTable[i].channelsocket, (struct sockaddr *)&(setTable[i].channel_addr), sizeof(setTable[i].channel_addr)) < 0)
 		{
+
 			perror("bind");
 			exit(1);
 		}
@@ -93,39 +96,219 @@ void setUpChannelTable(channel setTable[])
 
 }
 
-//this method is not called in the code written in this file
-//this will be used once the other issues are ironed out
-/*
-void subscribe_to_channel(char *chann_req, struct sockaddr_in *subscriber_addr)
-{
-	int capacity = 10;
-	int n;
-	for(n = 0; n<capacity; ++n){
-		if(*channel_table[n].channel_name == *chann_req){
-			int j = 0;
-			while(channel_table[n].subscribers[j].occupied==1){
-				++j;
-				if(j==10){
-					fprintf(stderr, "%s\n", "The requested channel is full.");
-					exit(1);
-				}
+
+
+	
+
+
+
+
+
+
+
+
+//need a new experiment to check on waiting messages: client 1 sends a message and client 2 sends a message. if client 1's message gets read in and then written to everyone, what is on the connection with client 2? does reading from client 2 still yield the client 2 message? does client 2 still receive the client 1 message?
+//that works!
+
+int main(int argc, char const *argv[]){
+
+	//error-handling
+	if (argc != 2){
+		fprintf(stderr, "%s\n", "Usage: server port");
+		exit(1);
+	}
+
+	// check that arg is an integer
+   	if (atoi(argv[1])==0){
+		fprintf(stderr, "%s\n", "Usage: port must be an integer");
+		exit(1);
+	}
+
+	//declaring variables and methods for later use
+	int lsock;
+	channel table[10];
+
+	//setting up
+	setUpChannelTable(table);
+
+	//print contents of table
+	//printChannelTable(table);
+	
+	//setting up our address
+	struct sockaddr_in rendez_addr;
+	memset(&rendez_addr, 0, sizeof(rendez_addr));
+
+	rendez_addr.sin_family = AF_INET;
+	rendez_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+	rendez_addr.sin_port = htons(atoi(argv[1]));
+
+	//creating our socket
+	if ((lsock = socket(AF_INET, SOCK_STREAM, 0))<0)
+	{
+		perror("socket");
+		exit(1);
+	}
+
+
+	//binding address to socket
+	if(bind(lsock, (struct sockaddr *)&rendez_addr, sizeof(rendez_addr))==-1)
+	{
+		perror("bind");
+		exit(1);
+	}
+
+
+	//putting socket into listening mode
+	if (listen(lsock, 5)==-1)
+	{
+		perror("listen");
+		exit(1);
+	}
+	
+	printf("Please initialize client now \n\n");
+
+	//accepting connection
+	while(1)
+	{
+		int csock;
+		struct sockaddr_in client_addr;
+		socklen_t client_len = sizeof(client_addr);
+
+		//setting up client socket and accepting pending connection
+		//program waits at accept. this means that the primary process of the program halts here, until a client tries to connect to the rendevous socket
+		csock = accept(lsock, (struct  sockaddr *)&client_addr, &client_len);
+
+		//acknowledgement
+		printf("Received connection from %s. Waiting to receive channel.\n\n", inet_ntoa(client_addr.sin_addr));
+
+		//get name from client of channel client desires
+		char tempbuff1[128];
+		int size3;
+
+		//Read for read-write pair number 1
+		size3=read(csock, tempbuff1, sizeof(tempbuff1));
+
+		if (size3<0)
+		{
+			perror("read");
+			exit(1);
+		}
+		
+		//output to user for r/w #1
+		printf("Client wants to be on channel: %d \n", atoi(tempbuff1));
+
+		//find channel to go with desire-channel name
+		int n=0;
+		while (n<10)
+		{
+			if (table[n].channel_name==atoi(tempbuff1))
+			{
+				break;
 			}
-			relay_entry * table_entry = &channel_table[n].subscribers[j];
-			table_entry->occupied = 1;
-			table_entry->relay_addr = *subscriber_addr;
-			table_entry->port_number = ntohs(subscriber_addr->relay_addr.sin_port);
-			break;
+			else
+			{
+				n++;
+			}
+		}
+
+		//more output to user for r/w #1
+		printf("The port number of the desired channel is: %d \n", table[n].channelport);
+
+			
+		printf("Number of subscribers on that channel before latest client subscribes: %d \n\n", table[n].numsub);
+
+	
+		//call the subscribe method
+		int clsock = subscribe_to_channel(table[n], csock); //contains write of r/w pair #2
+		printf(ANSI_COLOR_GREEN"%s\n\n" ANSI_COLOR_RESET, "Exited the subscribe_to_channel method");
+
+		for (int m=0; m<10; m++)
+		{
+			
+			if (table[n].subscriber[m]==0)
+			{
+				table[n].subscriber[m]=clsock;
+				printf("Subscriber in %d slot of channel \n", m);
+
+				break;
+			}
+		}
+		
+		table[n].numsub=(table[n].numsub)+1;  //just subscribed a member, so increment the number of subscribers
+
+		printf("Number of subscribers after subscription of latest client: %d \n\n", table[n].numsub);
+
+		
+		//GetSocketOptions(clsock);
+		//read/write pair #4
+		char tempbuff2[128];
+		int size4;
+		size4=read(clsock, tempbuff2, sizeof(tempbuff2));
+		if (size4<0)
+		{
+			printf("error with reading\n");
+			perror("write");
+			exit(1);
+		}
+		printf("Attempt to read BEFORE fork:\n"ANSI_COLOR_YELLOW "Message: %s\nCharacters: %d\n\n" ANSI_COLOR_RESET, tempbuff2, size4);
+	
+
+		//fork off a child process
+		int x = fork();
+		switch (x)
+		{
+			case -1: //error
+				perror("fork");
+				exit(1);
+			case 0: //child 
+
+				printf(ANSI_COLOR_RED "YOU ARE IN CHILD fork\n" ANSI_COLOR_RESET);
+				
+				int sizex;
+				char testtestx[128];
+				memset(testtestx,'\0',128);
+				
+				sizex=read(table[n].subscriber[(table[n].numsub)-1], testtestx, sizeof(testtestx));
+				printf("Attempt to read AFTER fork, BEFORE checking to run channelserve\n");
+				printf(ANSI_COLOR_YELLOW "Message: %s\nCharacters: %d"ANSI_COLOR_RESET" \n\n", testtestx, sizex);
+
+
+				if(table[n].numsub==1) //fork off a child process ONLY when the client that just subscribed is the ONLY subscriber in its channel. This child process will still be running when new clients are subscribed to the channel and no new process is necessary. (this concept will need eventual updating, when subscribers can leave channels)
+				{
+					printf("Attempting to read AFTER fork, AFTER checking to run channelserve,\nBEFORE channelserve\n");
+					
+					int size;
+					char testtest[128];
+					memset(testtest,'\0',128);
+					
+					size=read(table[n].subscriber[0], testtest, sizeof(testtest));
+					printf(ANSI_COLOR_YELLOW "Message: %s\nCharacters: %d"ANSI_COLOR_RESET" \n\n", testtest, size);
+
+
+					printf("About to enter channelserve on channel %d \n", n+1);
+					channelserve(table[n]);
+				}
+				close(csock);
+				break;
+			default: //parent
+				close(csock);
+				break;
 
 		}
+	
 	}
+	return 0;
 }
-*/
+//main ends
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 //this is called by the main method when it is time to subscribe a client to it's desired channel
 int subscribe_to_channel(channel c, int clsock)
 {
 	
-	printf("%s\n", "Entered the subscribe_to_channel method");
+
+	printf(ANSI_COLOR_GREEN"%s\n" ANSI_COLOR_RESET, "Entered the subscribe_to_channel method");
 
 	//send port number of channel to client
 	printf("%s\n", "Write, to client, the socket corresponding to the client's desired channel");
@@ -147,13 +330,14 @@ int subscribe_to_channel(channel c, int clsock)
 	clsock=accept(c.channelsocket, (struct  sockaddr *)&client_addr, &client_len);
 
 	printf("Socket ID of client when connected to channel: %d \n", clsock);
-	printf("(These two socket IDs, and the corresponding pair on the client side, \n");
-	printf("     will be the same or increment by one \n");
-	printf("     depending on where the close statement is placed in the client side code) \n");
+	//printf("These two socket IDs, and the corresponding pair on the client side, \n");
+	//printf("     will be the same or increment by one \n");
+	//printf("     depending on where the close statement is placed in the client side code \n");
 	
 	printf("%s\n", "Testing connection between channel and client");
 
 	char subscribetestbuff[128];
+	memset(subscribetestbuff,'\0',128);
 	int size2;
 	//read of r/w #3
 	size2 = read(clsock, subscribetestbuff, sizeof(subscribetestbuff));
@@ -163,13 +347,15 @@ int subscribe_to_channel(channel c, int clsock)
 		exit(1);
 	}
 	//subscribetestbuff[size]='\0';
-	printf("%s \n", subscribetestbuff);
+	printf(ANSI_COLOR_YELLOW"Message: %s \nCharacters: %d"ANSI_COLOR_RESET" \n",subscribetestbuff, size2);
 
 
 	return clsock;
 
 }
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//subscribe ends
+
+
 //This code was inside the subscribe_to_channel method but neither loop of them worked. 
 //I had to move the functionality into the main method for it to work
 //It is terrible coding practice to do that. but now it works. and all it cost me was my integrity.
@@ -198,31 +384,39 @@ int subscribe_to_channel(channel c, int clsock)
 
 /*
 	for (int n=0; n<10; n++)
+
 	{
 		
 		if (c.subscriber[n]==0)
 		{
+
 			c.subscriber[n]=clsock;
 			printf("Subscriber in %d slot\n", n);
+
 
 			//printf("Number of subscribers before incrementing: %d \n", c.numsub);
 			//c.numsub=(c.numsub)+1;  //just subscribed a member, so increment the number of subscribers
 			//printf("Number of subscribers after incrementing: %d \n", c.numsub);
 
 			break;
+
 		}
 	}
 */
+//subscribe extras end
+
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	
 
 /*
 void leave_channel(int clsock)
 {
+
 	overwrite slot with zero
 }
 */
+//leave channel ends
 
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 void channelserve(channel c)
 {
@@ -233,6 +427,7 @@ void channelserve(channel c)
 	printf("%s \n", "Attempting to read from client as soon as channelserve is entered");
 
 	char servetestbuff[128];
+	memset(servetestbuff,'\0',128);
 	int size1;
 	size1=read(c.subscriber[0], servetestbuff, sizeof(servetestbuff)); //read from that subscriber
 			
@@ -242,44 +437,52 @@ void channelserve(channel c)
 		exit(1);
 	}
 
-	printf("Characters: %d. Message: %s \n\n", size1, servetestbuff);
+	printf(ANSI_COLOR_YELLOW"Message: %s\nCharacters: %d"ANSI_COLOR_RESET" \n\n", servetestbuff, size1);
 
 //this is the code for continual discussion between client and server. obviously, this stuff is on hold for now
 /*
 	int n=c.numsub;
 	while(1)
 	{	
+
 		//printf("%s \n", "Start loop for constantly handling channel");
 		//infinite copies of above print statement! hooray!
 
 		char servetestbuff[1024];
 
+
 		for (int i=0; i<n; i++) //for each subscriber
 		{
 
 			fflush(stdout);
+
 			
 			printf("Read from member number %d on channel with fd number %d\n", i, c.subscriber[i]);	
 			
 			int size;
+
 			size=read(c.subscriber[i], servetestbuff, sizeof(servetestbuff)); //read from that subscriber
 			
 			if(size<0) //error handling
 			{
 				perror("read");
+
 				exit(1);
 			}
 			
 			fflush(stdout);
+
 
 			
 			//servetestbuff[size]='\0';	//null terminator
 
 			//c.chanbuff="fake input";
 
+
 			//strcpy(servetestbuff, "fake input");	
 
 			//printf("%s \n", servetestbuff);
+
 
 			printf("%d characters were read in \n", size1);
 
@@ -289,192 +492,39 @@ void channelserve(channel c)
 			//this is where the server writes out to the clients the data that was read in
 			//i want to get the reading in part working first before i start writing out
 			/*
+
 			if(strcmp(c.chanbuff,"") != 0) //if something is read in
 			{
 				for (int j=0; j<n; j++) //for each member
 				{
 					if (j!=i) //that is not the current member
+
 					{
 						printf("Write to member %d \n", j);
 						if (write(c.subscriber[j], c.chanbuff, strlen(c.chanbuff))<0) //write to that member
 						{
+
 							perror ("read");
 							exit(1);
 						}
 						
+
 					}
 				}
 			}
 			*/
 /*			//sleep(3);
+
 			break;
 		}
 		//sleep(3);
 		break;
 
 
+
 	}*/
 
 }
+//channelserve ends
 
-
-
-//need a new experiment to check on waiting messages: client 1 sends a message and client 2 sends a message. if client 1's message gets read in and then written to everyone, what is on the connection with client 2? does reading from client 2 still yield the client 2 message? does client 2 still receive the client 1 message?
-//that works!
-
-int main(int argc, char const *argv[])
-{
-	//error-handling
-	if (argc != 2){
-		fprintf(stderr, "%s\n", "Usage: server port");
-		exit(1);
-	}
-
-	//declaring variables
-	int lsock;
-	channel table[10];
-
-
-	//setting up
-	setUpChannelTable(table);
-	
-
-	//setting up our address
-	struct sockaddr_in rendez_addr;
-	memset(&rendez_addr, 0, sizeof(rendez_addr));
-
-	rendez_addr.sin_family = AF_INET;
-	rendez_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-	rendez_addr.sin_port = htons(atoi(argv[1]));
-
-
-	//creating our socket
-	if ((lsock = socket(AF_INET, SOCK_STREAM, 0))<0)
-	{
-		perror("socket");
-		exit(1);
-	}
-
-	//binding address to socket
-	if(bind(lsock, (struct sockaddr *)&rendez_addr, sizeof(rendez_addr))==-1)
-	{
-		perror("bind");
-		exit(1);
-	}
-
-	//putting socket into listening mode
-	if (listen(lsock, 5)==-1)
-	{
-		perror("listen");
-		exit(1);
-	}
-	
-	printf("Please initialize client now \n");
-
-	//accepting connection
-	while(1)
-	{
-		int csock;
-		struct sockaddr_in client_addr;
-		socklen_t client_len = sizeof(client_addr);
-
-		//setting up client socket and accepting pending connection
-		//program waits at accept. this means that the primary process of the program halts here, until a client tries to connect to the rendevous socket
-		csock = accept(lsock, (struct  sockaddr *)&client_addr, &client_len);
-
-		//acknowledgement
-		printf("Received connection from %s. Waiting to receive channel.\n", inet_ntoa(client_addr.sin_addr));
-
-		//get name from client of channel client desires
-		char tempbuff1[128];
-		int size3;
-
-		//Read for read-write pair number 1
-		size3=read(csock, tempbuff1, sizeof(tempbuff1));
-		if (size3<0)
-		{
-			perror("read");
-			exit(1);
-		}
-		
-		//output to user for r/w #1
-		printf("Client wants to be on channel: %s \n", atoi(tempbuff1));
-
-		//find channel to go with desire-channel name
-		int n=0;
-		while (n<10)
-		{
-			if (table[n].channel_name==atoi(tempbuff1))
-			{
-				break;
-			}
-			else
-			{
-				n++;
-			}
-		}
-
-		//more output to user for r/w #1
-		printf("The port number of the desired channel is: %d \n", table[n].channelport);
-
-			
-		printf("Number of subscribers on that channel before latest client subscribes: %d \n", table[n].numsub);
-
-
-		//call the subscribe method
-		int clsock = subscribe_to_channel(table[n], csock); //contains write of r/w pair #2
-
-		for (int m=0; m<10; m++)
-		{
-			
-			if (table[n].subscriber[m]==0)
-			{
-				table[n].subscriber[m]=clsock;
-				printf("Subscriber in %d slot of channel \n", m);
-
-				break;
-			}
-		}
-		
-		table[n].numsub=(table[n].numsub)+1;  //just subscribed a member, so increment the number of subscribers
-
-		printf("Number of subscribers after subscription of latest client: %d \n\n", table[n].numsub);
-
-		
-		//read/write pair #4
-		printf("Attempt to read BEFORE fork\n");
-		char tempbuff2[128];
-		int size4;
-		size4=read(clsock, tempbuff2, sizeof(tempbuff2));
-		printf(ANSI_COLOR_YELLOW "Characters: %d. Message: %s \n\n" ANSI_COLOR_RESET, size4, tempbuff2);
-		
-		//fork off a child process
-		int x = fork();
-		switch (x)
-		{
-			case -1: //error
-				perror("fork");
-				exit(1);
-			case 0: //child
-				if(table[n].numsub==1) //fork off a child process ONLY when the client that just subscribed is the ONLY subscriber in its channel. This child process will still be running when new clients are subscribed to the channel and no new process is necessary. (this concept will need eventual updating, when subscribers can leave channels)
-				{
-					printf("%s \n", "Attempt read AFTER fork, BEFORE channelserve");
-					int size;
-					char testtest[128];
-					size=read(table[0].subscriber[0], testtest, sizeof(testtest));
-					printf("Characters: %d. Message: %s \n\n", size, testtest);
-					printf("About to enter channelserve on channel %d \n", n+1);
-					channelserve(table[n]);
-				}
-				close(csock);
-				break;
-			default: //parent
-				close(csock);
-				break;
-
-		}
-	
-	}
-	return 0;
-}
 

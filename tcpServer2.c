@@ -9,8 +9,6 @@
 #include <arpa/inet.h>
 #include <string.h>
 #include <errno.h>  
-#include <sys/types.h>
-#include <sys/wait.h>
 
 #define ANSI_COLOR_RED     "\x1b[31m"
 #define ANSI_COLOR_GREEN   "\x1b[32m"
@@ -259,7 +257,6 @@ int main(int argc, char const *argv[]){
 	
 
 		//fork off a child process
-		//x is the process ID (can be used to kill when needed)
 		int x = fork();
 		switch (x)
 		{
@@ -303,7 +300,6 @@ int main(int argc, char const *argv[]){
 				close(csock);
 				break;
 			default: //parent
-				wait(0);  //wait here until child process finishes
 				close(csock);
 				break;
 

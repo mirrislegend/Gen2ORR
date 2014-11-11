@@ -7,7 +7,7 @@
 #include <netdb.h>
 #include <string.h>
 
-#define ANSI_COLOR_RED     "\x1b[31m" 
+#define ANSI_COLOR_RED     "\x1b[31m"
 #define ANSI_COLOR_GREEN   "\x1b[32m"
 #define ANSI_COLOR_YELLOW  "\x1b[33m"
 #define ANSI_COLOR_BLUE    "\x1b[34m"
@@ -183,7 +183,7 @@ int main(int argc, char *argv[]) {
 	//FILE* fp3 = fdopen(new_fd, "w");
 	//fflush(fp3);
 
-	printf(ANSI_COLOR_GREEN "%s \n"ANSI_COLOR_RESET, "Sent test data to channel");
+	printf(ANSI_COLOR_GREEN "%s \n"ANSI_COLOR_RESET, "Finished sending test data to server");
 	//printf(ANSI_COLOR_YELLOW  "%s"  ANSI_COLOR_RESET "\n", "yellow yellow yellow");
 
 /*

@@ -167,7 +167,7 @@ int main(int argc, char const *argv[]){
 	
 	printf("Please initialize client now \n\n");
 
-	//accepting connection
+	//this loop represents the rendezvous constantly receiving incoming clients, making channels when possible, and handing those clients to channels 
 	while(1)
 	{
 		int csock;
@@ -222,8 +222,11 @@ int main(int argc, char const *argv[]){
 		int clsock = subscribe_to_channel(table[n], csock); //contains write of r/w pair #2
 		printf(ANSI_COLOR_GREEN"%s\n\n" ANSI_COLOR_RESET, "Exited the subscribe_to_channel method");
 
+		//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		//from here down to next big marker made of tilde's should be in the subscribe to channel method. read the notes on the subscribe to channel method for a better explanation
 		for (int m=0; m<10; m++)
 		{
+			printf("Channel %d, subscriber #%d has fd=%d\n", m+1, n+1, table[n].subscriber[m]);
 			
 			if (table[n].subscriber[m]==0)
 			{
@@ -260,7 +263,7 @@ int main(int argc, char const *argv[]){
 			case -1: //error
 				perror("fork");
 				exit(1);
-			case 0: //child 
+			case 0: //child
 
 				printf(ANSI_COLOR_RED "YOU ARE IN CHILD fork\n" ANSI_COLOR_RESET);
 				
@@ -275,6 +278,7 @@ int main(int argc, char const *argv[]){
 
 				if(table[n].numsub==1) //fork off a child process ONLY when the client that just subscribed is the ONLY subscriber in its channel. This child process will still be running when new clients are subscribed to the channel and no new process is necessary. (this concept will need eventual updating, when subscribers can leave channels)
 				{
+					printf(ANSI_COLOR_RED "If you can read this, then you have just subscribed a client to the channel for the first time. That means channel serve WILL be entered. Channelserve contains the 4th and 5th print statements. So you WILL see the 4th and 5th print statements.\n" ANSI_COLOR_RESET);
 					printf("Attempting to read AFTER fork, AFTER checking to run channelserve,\nBEFORE channelserve\n");
 					
 					int size;
@@ -287,6 +291,11 @@ int main(int argc, char const *argv[]){
 
 					printf("About to enter channelserve on channel %d \n", n+1);
 					channelserve(table[n]);
+				}
+				else
+				{
+					printf(ANSI_COLOR_RED "If you can read this, then the client that you have just subscribed to the channel is NOT the first client in that channel. That means channel serve WILL NOT be entered. Channelserve contains the 4th and 5th print statements. So you WILL NOT see the 4th and 5th print statements.\n"ANSI_COLOR_RESET);
+					printf(ANSI_COLOR_RESET"\n");
 				}
 				close(csock);
 				break;
@@ -323,6 +332,7 @@ int subscribe_to_channel(channel c, int clsock)
 	printf("Socket ID of client when connected to rendezvous: %d \n", clsock);
 
 	close(clsock);
+	printf("Close connection to rendezvous. Connect to channel.\n");
 
 	//accept client's connection to channel's socket
 	struct sockaddr_in client_addr;

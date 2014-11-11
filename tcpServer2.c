@@ -226,15 +226,22 @@ int main(int argc, char const *argv[]){
 		//from here down to next big marker made of tilde's should be in the subscribe to channel method. read the notes on the subscribe to channel method for a better explanation
 		for (int m=0; m<10; m++)
 		{
-			printf("Channel %d, subscriber #%d has fd=%d\n", m+1, n+1, table[n].subscriber[m]);
+			
 			
 			if (table[n].subscriber[m]==0)
 			{
 				table[n].subscriber[m]=clsock;
-				printf("Subscriber in %d slot of channel \n", m);
+
+				printf("Channel %d, subscriber #%d has fd=%d\n", n+1, m+1, table[n].subscriber[m]);
 
 				break;
 			}
+			else
+			{
+				printf("Channel %d, subscriber #%d has fd=%d\n", n+1, m+1, table[n].subscriber[m]);
+			}
+			
+
 		}
 		
 		table[n].numsub=(table[n].numsub)+1;  //just subscribed a member, so increment the number of subscribers

@@ -166,7 +166,9 @@ int main(int argc, char *argv[]) {
 	printf("%s \n", "Writing test data before fork");
 	
 	int loopNbr;
-	for(loopNbr = 0; loopNbr != 5; loopNbr++){
+	int incoming;
+	char instring[1024];
+	for(loopNbr = 0; loopNbr != 8; loopNbr++){
 		char sendString[15];
 		sprintf(sendString, "Sending %d", loopNbr);
 		if(write(new_fd, sendString, sizeof(sendString))<0)
@@ -175,7 +177,18 @@ int main(int argc, char *argv[]) {
 			exit(1);
 		}
 		printf("%s \n", sendString);
+/*	// read from other clients through server
+		incoming=read(new_fd, instring, sizeof(instring)); //read from the server
+		if (incoming > 0){
+			printf("from server:   "ANSI_COLOR_YELLOW"%s "ANSI_COLOR_RESET"\n", instring);
+		}
+		else if (incoming < 0){
+			perror("read");
+			exit(1);
+		}
+*/
 		sleep(1);
+		
 		//FILE* fp2 = fdopen(new_fd, "w");
 		//fflush(fp2);
 

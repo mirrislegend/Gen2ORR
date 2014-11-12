@@ -285,18 +285,17 @@ int main(int argc, char const *argv[]){
 
 				if(table[n].numsub==1) //fork off a child process ONLY when the client that just subscribed is the ONLY subscriber in its channel. This child process will still be running when new clients are subscribed to the channel and no new process is necessary. (this concept will need eventual updating, when subscribers can leave channels)
 				{
-					printf(ANSI_COLOR_RED "If you can read this, then you have just subscribed a client to the channel for the first time. That means channel serve WILL be entered. Channelserve contains the 4th and 5th print statements. So you WILL see the 4th and 5th print statements.\n" ANSI_COLOR_RESET);
-					printf("Attempting to read AFTER fork, AFTER checking to run channelserve,\nBEFORE channelserve\n");
+					printf(ANSI_COLOR_MAGENTA "If you can read this, then you have just subscribed a client to the channel for the first time. That means channel serve WILL be entered. Channelserve contains the 4th and 5th print statements. So you WILL see the 4th and 5th print statements.\n" ANSI_COLOR_RESET);
+					//printf("Attempting to read AFTER fork, AFTER checking to run channelserve,\nBEFORE channelserve\n");
 					
-					int size;
-					char testtest[128];
-					memset(testtest,'\0',128);
+					//int size;
+					//char testtest[128];
+					//memset(testtest,'\0',128);
 					
-					size=read(table[n].subscriber[0], testtest, sizeof(testtest));
-					printf(ANSI_COLOR_YELLOW "Message: %s\nCharacters: %d"ANSI_COLOR_RESET" \n\n", testtest, size);
+					//size=read(table[n].subscriber[0], testtest, sizeof(testtest));
+					//printf(ANSI_COLOR_YELLOW "Message: %s\nCharacters: %d"ANSI_COLOR_RESET" \n\n", testtest, size);
 
-
-					printf("About to enter channelserve on channel %d \n", n+1);
+					//printf("About to enter channelserve on channel %d \n", n+1);
 					channelserve(table[n]);
 				}
 				else
@@ -438,78 +437,44 @@ void leave_channel(int clsock)
 void channelserve(channel c)
 {
 	//entire channel socket is already in channel table
-
 	printf("%s \n", "you've reached the channelserve method! hooray!");
-	printf("%s \n\n", "MAKE SURE TO KILL THE SERVER SIDE FIRST");
-	printf("%s \n", "Attempting to read from client as soon as channelserve is entered");
 
-	char servetestbuff[128];
-	memset(servetestbuff,'\0',128);
-	int size1;
-	size1=read(c.subscriber[0], servetestbuff, sizeof(servetestbuff)); //read from that subscriber
-			
-	if(size1<0) //error handling
-	{
-		perror("read");
-		exit(1);
-	}
+	//this is the code for continual discussion between client and server.
 
-	printf(ANSI_COLOR_YELLOW"Message: %s\nCharacters: %d"ANSI_COLOR_RESET" \n\n", servetestbuff, size1);
-
-//this is the code for continual discussion between client and server. obviously, this stuff is on hold for now
-/*
 	int n=c.numsub;
+	printf("%s \n", "Start loop for constantly handling channel");
 	while(1)
 	{	
-
-		//printf("%s \n", "Start loop for constantly handling channel");
-		//infinite copies of above print statement! hooray!
-
 		char servetestbuff[1024];
-
-
 		for (int i=0; i<n; i++) //for each subscriber
 		{
-
-			fflush(stdout);
-
-			
-			printf("Read from member number %d on channel with fd number %d\n", i, c.subscriber[i]);	
-			
+			//fflush(stdout);  //not needed
 			int size;
-
 			size=read(c.subscriber[i], servetestbuff, sizeof(servetestbuff)); //read from that subscriber
 			
 			if(size<0) //error handling
 			{
 				perror("read");
-
 				exit(1);
 			}
-			
-			fflush(stdout);
-
-
-			
-			//servetestbuff[size]='\0';	//null terminator
-
+			else if(size>0)
+			{
+				printf("Read from member number %d on channel with fd number %d\n", i, c.subscriber[i]);	
+				printf("from client:   "ANSI_COLOR_YELLOW"%s "ANSI_COLOR_RESET"\n", servetestbuff);
+				servetestbuff[size]='\0';	//null terminator
+			}
+			//servetestbuff[size]='\0';	//not needed here //null terminator
+			//fflush(stdout);		
 			//c.chanbuff="fake input";
-
-
 			//strcpy(servetestbuff, "fake input");	
+			//printf("%d characters were read in \n", size1);
 
-			//printf("%s \n", servetestbuff);
-
-
-			printf("%d characters were read in \n", size1);
-
-			printf("%s \n", "This print statement executes immediately after printing data from client");
-*/			
+			//printf("%s \n", "This print statement executes immediately after printing data from client");
+			
 			
 			//this is where the server writes out to the clients the data that was read in
 			//i want to get the reading in part working first before i start writing out
-			/*
-
+			
 			if(strcmp(c.chanbuff,"") != 0) //if something is read in
 			{
 				for (int j=0; j<n; j++) //for each member
@@ -529,17 +494,17 @@ void channelserve(channel c)
 					}
 				}
 			}
-			*/
+			
 /*			//sleep(3);
 
-			break;
+			break;*/
 		}
-		//sleep(3);
-		break;
+		sleep(1);
+		//break;
 
 
 
-	}*/
+	}
 
 }
 //channelserve ends

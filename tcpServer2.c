@@ -187,6 +187,7 @@ int main(int argc, char const *argv[]){
 
 		//Read for read-write pair number 1
 		size3=read(csock, tempbuff1, sizeof(tempbuff1));
+//this read should be an int between 1 and 9.  I entered 0 and it did not reject it.
 
 		if (size3<0)
 		{
@@ -260,7 +261,7 @@ int main(int argc, char const *argv[]){
 			perror("write");
 			exit(1);
 		}
-		printf("Attempt to read BEFORE fork:\n"ANSI_COLOR_YELLOW "Message: %s\nCharacters: %d\n\n" ANSI_COLOR_RESET, tempbuff2, size4);
+		printf("Attempt to read BEFORE fork:\n"ANSI_COLOR_YELLOW "Message: %s Characters: %d\n\n" ANSI_COLOR_RESET, tempbuff2, size4);
 	
 
 		//fork off a child process
@@ -280,7 +281,7 @@ int main(int argc, char const *argv[]){
 				
 				sizex=read(table[n].subscriber[(table[n].numsub)-1], testtestx, sizeof(testtestx));
 				printf("Attempt to read AFTER fork, BEFORE checking to run channelserve\n");
-				printf(ANSI_COLOR_YELLOW "Message: %s\nCharacters: %d"ANSI_COLOR_RESET" \n\n", testtestx, sizex);
+				printf(ANSI_COLOR_YELLOW "Message: %s Characters: %d"ANSI_COLOR_RESET" \n\n", testtestx, sizex);
 
 
 				if(table[n].numsub==1) //fork off a child process ONLY when the client that just subscribed is the ONLY subscriber in its channel. This child process will still be running when new clients are subscribed to the channel and no new process is necessary. (this concept will need eventual updating, when subscribers can leave channels)
@@ -363,7 +364,7 @@ int subscribe_to_channel(channel c, int clsock)
 		exit(1);
 	}
 	//subscribetestbuff[size]='\0';
-	printf(ANSI_COLOR_YELLOW"Message: %s \nCharacters: %d"ANSI_COLOR_RESET" \n",subscribetestbuff, size2);
+	printf(ANSI_COLOR_YELLOW"Message: %s Characters: %d"ANSI_COLOR_RESET" \n",subscribetestbuff, size2);
 
 
 	return clsock;
@@ -446,6 +447,9 @@ void channelserve(channel c)
 	while(1)
 	{	
 		char servetestbuff[1024];
+		//print the fds
+		//printf("check fd: 0:%d 1:%d 2:%d 3:%d\n",c.subscriber[0],c.subscriber[1],c.subscriber[2],c.subscriber[3]);
+
 		for (int i=0; i<n; i++) //for each subscriber
 		{
 			//fflush(stdout);  //not needed
@@ -459,8 +463,10 @@ void channelserve(channel c)
 			}
 			else if(size>0)
 			{
-				printf("Read from member number %d on channel with fd number %d\n", i, c.subscriber[i]);	
+				printf("Read from member number %d on channel with fd number %d ", i, c.subscriber[i]);	
 				printf("from client:   "ANSI_COLOR_YELLOW"%s "ANSI_COLOR_RESET"\n", servetestbuff);
+				//fill chanbuff for broadcast
+				sprintf(c.chanbuff, "Broadcasting from sub# %s: %d",servetestbuff, i);
 				servetestbuff[size]='\0';	//null terminator
 			}
 			//servetestbuff[size]='\0';	//not needed here //null terminator
@@ -475,6 +481,7 @@ void channelserve(channel c)
 			//this is where the server writes out to the clients the data that was read in
 			//i want to get the reading in part working first before i start writing out
 			
+//what is in c.chanbuff at this point? nothing as far as I can tell
 			if(strcmp(c.chanbuff,"") != 0) //if something is read in
 			{
 				for (int j=0; j<n; j++) //for each member
@@ -500,11 +507,10 @@ void channelserve(channel c)
 			break;*/
 		}
 		sleep(1);
+
 		//break;
 
-
-
-	}
+	}  //ends while(1)
 
 }
 //channelserve ends

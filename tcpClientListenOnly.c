@@ -177,11 +177,10 @@ int main(int argc, char *argv[]) {
 			exit(1);
 		}
 		printf("%s \n", sendString);
+/*
+//this code hangs the client after "sending 0"
 	// read from other clients through server
-	// this code hangs the client after "sending 0"
-		//incoming=read(new_fd, instring, sizeof(instring)); //read from the server
-		incoming = 1;
-		sprintf(instring, "fake input");
+		incoming=read(new_fd, instring, sizeof(instring)); //read from the server
 		if (incoming > 0){
 			printf("from server:   "ANSI_COLOR_YELLOW"%s "ANSI_COLOR_RESET"\n", instring);
 		}
@@ -189,7 +188,7 @@ int main(int argc, char *argv[]) {
 			perror("read");
 			exit(1);
 		}
-
+*/
 		sleep(1);
 		
 		//FILE* fp2 = fdopen(new_fd, "w");

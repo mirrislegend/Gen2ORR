@@ -163,7 +163,7 @@ int main(int argc, char *argv[]) {
 	//Read/write pair #4
 	//this is where the client WOULD send data regularly to relay
 	//obviously, that is not happening here yet. Just trying to send stuff from client to server and get that to work
-	printf("%s \n", "Writing test data before fork");
+	printf("%s \n", "Writing test data");
 	
 	int loopNbr;
 	int incoming=0;
@@ -189,7 +189,7 @@ int main(int argc, char *argv[]) {
 				printf("from server:   "ANSI_COLOR_YELLOW"%s "ANSI_COLOR_RESET"\n", instring);
 
 			}
-			else if (incoming < 0){
+			else if (incoming <= 0){
 				perror("read");
 				printf("no incoming message \n");
 				//exit(1);

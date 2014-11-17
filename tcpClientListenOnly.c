@@ -168,27 +168,34 @@ int main(int argc, char *argv[]) {
 	int loopNbr;
 	int incoming;
 	char instring[1024];
-	for(loopNbr = 0; loopNbr != 8; loopNbr++){
-		char sendString[15];
-		sprintf(sendString, "Sending %d", loopNbr);
-		if(write(new_fd, sendString, sizeof(sendString))<0)
-		{
-			perror("write");
-			exit(1);
+	for(loopNbr = 0; loopNbr != 10; loopNbr++){
+		if (loopNbr <= 3){
+			char sendString[15];
+			sprintf(sendString, "Sending %d", loopNbr);
+			if(write(new_fd, sendString, sizeof(sendString))<0)
+			{
+				perror("write");
+				exit(1);
+			}
+			printf("%s \n", sendString);
 		}
-		printf("%s \n", sendString);
-/*
-//this code hangs the client after "sending 0"
-	// read from other clients through server
-		incoming=read(new_fd, instring, sizeof(instring)); //read from the server
-		if (incoming > 0){
-			printf("from server:   "ANSI_COLOR_YELLOW"%s "ANSI_COLOR_RESET"\n", instring);
+		if (loopNbr > 3){
+			incoming=read(new_fd, instring, sizeof(instring)); //read from the server
+			//printf("incoming: %d\n", incoming);
+			//incoming = 1;
+			//sprintf(instring, "fake input");
+			if (incoming > 0){
+				printf("from server:   "ANSI_COLOR_YELLOW"%s "ANSI_COLOR_RESET"\n", instring);
+			}
+			else if (incoming = 0){
+				printf("nothing to read\n");
+			}
+			else {
+				perror("read");
+				printf("no imcoming message\n");
+				//exit(1);
+			}
 		}
-		else if (incoming < 0){
-			perror("read");
-			exit(1);
-		}
-*/
 		sleep(1);
 		
 		//FILE* fp2 = fdopen(new_fd, "w");
@@ -198,7 +205,7 @@ int main(int argc, char *argv[]) {
 	//FILE* fp3 = fdopen(new_fd, "w");
 	//fflush(fp3);
 
-	printf(ANSI_COLOR_GREEN "%s \n"ANSI_COLOR_RESET, "Finished sending test data to server");
+	printf(ANSI_COLOR_GREEN "\n %s \n"ANSI_COLOR_RESET, "Finished sending test data to server");
 	//printf(ANSI_COLOR_YELLOW  "%s"  ANSI_COLOR_RESET "\n", "yellow yellow yellow");
 
 /*

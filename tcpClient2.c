@@ -166,7 +166,7 @@ int main(int argc, char *argv[]) {
 	printf("%s \n", "Writing test data before fork");
 	
 	int loopNbr;
-	int incoming;
+	int incoming=0;
 	char instring[1024];
 	for(loopNbr = 0; loopNbr != 8; loopNbr++){
 		char sendString[15];
@@ -179,15 +179,19 @@ int main(int argc, char *argv[]) {
 		printf("%s \n", sendString);
 	// read from other clients through server
 	// this code hangs the client after "sending 0"
-		//incoming=read(new_fd, instring, sizeof(instring)); //read from the server
-		incoming = 1;
-		sprintf(instring, "fake input");
-		if (incoming > 0){
-			printf("from server:   "ANSI_COLOR_YELLOW"%s "ANSI_COLOR_RESET"\n", instring);
-		}
-		else if (incoming < 0){
-			perror("read");
-			exit(1);
+		if (loopNbr > 3){
+			incoming=read(new_fd, instring, sizeof(instring)); //read from the server
+			//printf("incoming: %d\n", incoming);
+			//incoming = 1;
+			//sprintf(instring, "fake input");
+			if (incoming > 0){
+				printf("from server:   "ANSI_COLOR_YELLOW"%s "ANSI_COLOR_RESET"\n", instring);
+			}
+			else if (incoming < 0){
+				perror("read");
+				printf("no imcoming message \n");
+				//exit(1);
+			}
 		}
 
 		sleep(1);

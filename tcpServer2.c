@@ -442,10 +442,11 @@ void channelserve(channel c)
 
 	//this is the code for continual discussion between client and server.
 
-	int n=c.numsub;
+	
 	printf("%s \n", "Start loop for constantly handling channel");
 	while(1)
 	{	
+		int n=c.numsub;	
 		char servetestbuff[1024];
 		//print the fds
 		//printf("check fd: 0:%d 1:%d 2:%d 3:%d\n",c.subscriber[0],c.subscriber[1],c.subscriber[2],c.subscriber[3]);
@@ -459,14 +460,14 @@ void channelserve(channel c)
 			if(size<0) //error handling
 			{
 				perror("read");
-				exit(1);
+	https://github.com/mirrislegend/Gen2ORR.git			exit(1);
 			}
 			else if(size>0)
 			{
 				printf("Read from member number %d on channel with fd number %d ", i, c.subscriber[i]);	
 				printf("from client:   "ANSI_COLOR_YELLOW"%s "ANSI_COLOR_RESET"\n", servetestbuff);
 				//fill chanbuff for broadcast
-				sprintf(c.chanbuff, "Broadcasting from sub# %s: %d",servetestbuff, i);
+				sprintf(c.chanbuff, "Broadcasting from subscriber# %d: %s    \n",i, servetestbuff);
 				servetestbuff[size]='\0';	//null terminator
 			}
 			//servetestbuff[size]='\0';	//not needed here //null terminator
@@ -486,17 +487,18 @@ void channelserve(channel c)
 			{
 				for (int j=0; j<n; j++) //for each member
 				{
-					if (j!=i) //that is not the current member
+					if (j==i||j!=i) //that is not the current member  **************debug**********************************
 
 					{
 						printf("Write to member %d \n", j);
 						if (write(c.subscriber[j], c.chanbuff, strlen(c.chanbuff))<0) //write to that member
 						{
-
 							perror ("read");
 							exit(1);
 						}
-						
+						else{
+							printf("sent: %s \n", c.chanbuff);
+						}
 
 					}
 				}

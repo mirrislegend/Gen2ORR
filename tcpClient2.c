@@ -191,7 +191,7 @@ int main(int argc, char *argv[]) {
 			}
 			else if (incoming < 0){
 				perror("read");
-				printf("no imcoming message \n");
+				printf("no incoming message \n");
 				//exit(1);
 			}
 //		}

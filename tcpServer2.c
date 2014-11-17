@@ -460,19 +460,27 @@ void channelserve(channel c)
 			//fflush(stdout);  //not needed
 			int size;
 			size=read(c.subscriber[i], servetestbuff, sizeof(servetestbuff)); //read from that subscriber
+			printf("%d\n", size); //print number of characters read in
 
 			if(size<0) //error handling
 			{
 				perror("read");
 				exit(1);
 			}
+			else if (size==0)
+			{
+				sprintf(c.chanbuff, "");
+			}
 			else if(size>0)
 			{
 				printf("Read from member number %d on channel with fd number %d ", i, c.subscriber[i]);	
 				printf("from client:   "ANSI_COLOR_YELLOW"%s "ANSI_COLOR_RESET"\n", servetestbuff);
+
+				servetestbuff[size]='\0';
+
 				//fill chanbuff for broadcast
 				sprintf(c.chanbuff, "Broadcasting from subscriber# %d: %s    \n",i, servetestbuff);
-				servetestbuff[size]='\0';	//null terminator
+					//null terminator
 			}
 			//servetestbuff[size]='\0';	//not needed here //null terminator
 			//fflush(stdout);		

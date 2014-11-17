@@ -185,7 +185,8 @@ int main(int argc, char const *argv[]){
 		char tempbuff1[128];
 		int size3;
 
-		//Read for read-write pair number 1
+		//receive channel from client
+		//Read for read-write pair number 1  
 		size3=read(csock, tempbuff1, sizeof(tempbuff1));
 //this read should be an int between 1 and 9.  I entered 0 and it did not reject it.
 
@@ -220,7 +221,7 @@ int main(int argc, char const *argv[]){
 
 	
 		//call the subscribe method
-		int clsock = subscribe_to_channel(table[n], csock); //contains write of r/w pair #2
+		int clsock = subscribe_to_channel(table[n], csock);
 		printf(ANSI_COLOR_GREEN"%s\n\n" ANSI_COLOR_RESET, "Exited the subscribe_to_channel method");
 
 		//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -249,7 +250,7 @@ int main(int argc, char const *argv[]){
 
 		printf("Number of subscribers after subscription of latest client: %d \n\n", table[n].numsub);
 
-		
+		/*
 		//GetSocketOptions(clsock);
 		//read/write pair #4
 		char tempbuff2[128];
@@ -262,7 +263,7 @@ int main(int argc, char const *argv[]){
 			exit(1);
 		}
 		printf("Attempt to read BEFORE fork:\n"ANSI_COLOR_YELLOW "Message: %s Characters: %d\n\n" ANSI_COLOR_RESET, tempbuff2, size4);
-	
+		*/
 
 		//fork off a child process
 		int x = fork();
@@ -274,7 +275,7 @@ int main(int argc, char const *argv[]){
 			case 0: //child
 
 				printf(ANSI_COLOR_RED "YOU ARE IN CHILD fork\n" ANSI_COLOR_RESET);
-				
+				/*
 				int sizex;
 				char testtestx[128];
 				memset(testtestx,'\0',128);
@@ -282,7 +283,7 @@ int main(int argc, char const *argv[]){
 				sizex=read(table[n].subscriber[(table[n].numsub)-1], testtestx, sizeof(testtestx));
 				printf("Attempt to read AFTER fork, BEFORE checking to run channelserve\n");
 				printf(ANSI_COLOR_YELLOW "Message: %s Characters: %d"ANSI_COLOR_RESET" \n\n", testtestx, sizex);
-
+				*/
 
 				if(table[n].numsub==1) //fork off a child process ONLY when the client that just subscribed is the ONLY subscriber in its channel. This child process will still be running when new clients are subscribed to the channel and no new process is necessary. (this concept will need eventual updating, when subscribers can leave channels)
 				{
@@ -329,6 +330,7 @@ int subscribe_to_channel(channel c, int clsock)
 	//send port number of channel to client
 	printf("%s\n", "Write, to client, the socket corresponding to the client's desired channel");
 	int x = htons(c.channelport);
+	//write the socket to client
 	//write for r/w pair #2
 	if (write(clsock, &x, sizeof(x))<0)
 	{
@@ -353,7 +355,8 @@ int subscribe_to_channel(channel c, int clsock)
 	
 	printf("%s\n", "Testing connection between channel and client");
 
-	char subscribetestbuff[128];
+	//this is code for test messages - debugging only
+/*	char subscribetestbuff[128];
 	memset(subscribetestbuff,'\0',128);
 	int size2;
 	//read of r/w #3
@@ -365,7 +368,7 @@ int subscribe_to_channel(channel c, int clsock)
 	}
 	//subscribetestbuff[size]='\0';
 	printf(ANSI_COLOR_YELLOW"Message: %s Characters: %d"ANSI_COLOR_RESET" \n",subscribetestbuff, size2);
-
+*/
 
 	return clsock;
 
@@ -444,9 +447,10 @@ void channelserve(channel c)
 
 	
 	printf("%s \n", "Start loop for constantly handling channel");
+	int n;
 	while(1)
 	{	
-		int n=c.numsub;	
+		n=c.numsub;	
 		char servetestbuff[1024];
 		//print the fds
 		//printf("check fd: 0:%d 1:%d 2:%d 3:%d\n",c.subscriber[0],c.subscriber[1],c.subscriber[2],c.subscriber[3]);
@@ -456,11 +460,11 @@ void channelserve(channel c)
 			//fflush(stdout);  //not needed
 			int size;
 			size=read(c.subscriber[i], servetestbuff, sizeof(servetestbuff)); //read from that subscriber
-			
+
 			if(size<0) //error handling
 			{
 				perror("read");
-	https://github.com/mirrislegend/Gen2ORR.git			exit(1);
+				exit(1);
 			}
 			else if(size>0)
 			{
@@ -482,7 +486,7 @@ void channelserve(channel c)
 			//this is where the server writes out to the clients the data that was read in
 			//i want to get the reading in part working first before i start writing out
 			
-//what is in c.chanbuff at this point? nothing as far as I can tell
+
 			if(strcmp(c.chanbuff,"") != 0) //if something is read in
 			{
 				for (int j=0; j<n; j++) //for each member

@@ -179,20 +179,22 @@ int main(int argc, char *argv[]) {
 		printf("%s \n", sendString);
 	// read from other clients through server
 	// this code hangs the client after "sending 0"
-		if (loopNbr > 3){
+//		if (loopNbr > 3){
 			incoming=read(new_fd, instring, sizeof(instring)); //read from the server
+			instring[incoming]='\0';	//null terminator
 			//printf("incoming: %d\n", incoming);
 			//incoming = 1;
 			//sprintf(instring, "fake input");
 			if (incoming > 0){
 				printf("from server:   "ANSI_COLOR_YELLOW"%s "ANSI_COLOR_RESET"\n", instring);
+
 			}
 			else if (incoming < 0){
 				perror("read");
 				printf("no imcoming message \n");
 				//exit(1);
 			}
-		}
+//		}
 
 		sleep(1);
 		

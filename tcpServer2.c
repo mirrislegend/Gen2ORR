@@ -224,6 +224,9 @@ int main(int argc, char const *argv[]){
 		int clsock = subscribe_to_channel(table[n], csock);
 		printf(ANSI_COLOR_GREEN"%s\n\n" ANSI_COLOR_RESET, "Exited the subscribe_to_channel method");
 
+		close(csock);
+		printf("Close connection to rendezvous. Connect to channel.\n");
+
 		//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 		//from here down to next big marker made of tilde's should be in the subscribe to channel method. read the notes on the subscribe to channel method for a better explanation
 		for (int m=0; m<10; m++)
@@ -340,8 +343,8 @@ int subscribe_to_channel(channel c, int clsock)
 
 	printf("Socket ID of client when connected to rendezvous: %d \n", clsock);
 
-	close(clsock);
-	printf("Close connection to rendezvous. Connect to channel.\n");
+	//close(clsock);
+	//printf("Close connection to rendezvous. Connect to channel.\n");
 
 	//accept client's connection to channel's socket
 	struct sockaddr_in client_addr;
@@ -450,14 +453,16 @@ void channelserve(channel c)
 	int n;
 	while(1)
 	{	
+		printf("This is the top of the channelserve loop\n");
 		n=c.numsub;	
+		printf("There are %d clients currently subscribed to this channel.\n", n);
 		char servetestbuff[1024];
 		//print the fds
 		//printf("check fd: 0:%d 1:%d 2:%d 3:%d\n",c.subscriber[0],c.subscriber[1],c.subscriber[2],c.subscriber[3]);
 
 		for (int i=0; i<n; i++) //for each subscriber
 		{
-			//fflush(stdout);  //not needed
+			printf("Reading from subscriber #%d: \n", i);
 			int size;
 			size=read(c.subscriber[i], servetestbuff, sizeof(servetestbuff)); //read from that subscriber
 			printf("%d\n", size); //print number of characters read in

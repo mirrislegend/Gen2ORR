@@ -22,7 +22,7 @@ int client_serve(int new_pn, struct sockaddr_in *server_addr, int currentportnum
 
 
 	int x = server_addr->sin_port;
-
+/*
 	printf("Close connection to rendez socket \n");
 	//closing the connection to the old socket
 	if (close(currentportnumber)<0)
@@ -32,7 +32,7 @@ int client_serve(int new_pn, struct sockaddr_in *server_addr, int currentportnum
 	}	
 
 	printf("Connection with %d is terminated\n", ntohs(x));
-
+*/
 	//changing port number
 	x = new_pn;
 	server_addr->sin_port = htons(x);
@@ -152,9 +152,10 @@ int main(int argc, char *argv[]) {
 
 	//where the magic happens
 	int new_fd;
-	//contains "close" for client side of connection with rendezvous
+//	//contains "close" for client side of connection with rendezvous
 	//contains write of r/w #3
 	new_fd = client_serve(new_port_number, &server_addr, sock);
+	close(sock);
 	
 	printf("Connected to new socket with file descriptor %d \n", new_fd);
 

@@ -1,5 +1,5 @@
 In Linux to compile:
-gcc -o TcpServer TcpServer.c -std+=c99
+gcc -o TcpServer TcpServer.c -std=c99
 gcc -o TcpClient TcpClient.c
 
 To compile:

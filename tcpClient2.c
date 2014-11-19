@@ -52,15 +52,16 @@ int client_serve(int new_pn, struct sockaddr_in *server_addr, int currentportnum
 	}
 
 	printf("%s \n", "Connected to new socket");
-
+/*
 	//test of new connection
 	//write of r/w #3
-//	if(write(new_sock, "If you can see this, the client successfully connected to the channel", sizeof("If you can see this, the client successfully connected to the channel"))<0)
-//	{
-//		perror("write");
-//		exit(1);
-//	}
-	//FILE* fp1 = fdopen(new_sock, "w");
+	printf("Testing connection between client and channel.\n");
+	if(write(new_sock, "If you can see this, the client successfully connected to the channel\n", sizeof("If you can see this, the client successfully connected to the channel\n"))<0)
+	{
+		perror("write");
+		exit(1);
+	}
+*/	//FILE* fp1 = fdopen(new_sock, "w");
 	//fflush(fp1);
 
 
@@ -152,11 +153,18 @@ int main(int argc, char *argv[]) {
 
 	//where the magic happens
 	int new_fd;
-//	//contains "close" for client side of connection with rendezvous
+
 	//contains write of r/w #3
 	new_fd = client_serve(new_port_number, &server_addr, sock);
 	close(sock);
-	
+
+printf("Testing connection between client and channel.\n");	
+if(write(new_fd, "If you can see this, the client successfully connected to the channel\n", sizeof("If you can see this, the client successfully connected to the channel\n"))<0)
+	{
+		perror("write");
+		exit(1);
+	}
+
 	printf("Connected to new socket with file descriptor %d \n", new_fd);
 
 	

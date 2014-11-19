@@ -169,7 +169,7 @@ int main(int argc, char *argv[]) {
 	int incoming;
 	char instring[1024];
 	for(loopNbr = 0; loopNbr != 10; loopNbr++){
-		if (loopNbr <= 2){
+		if (loopNbr <= 3){
 			char sendString[15];
 			sprintf(sendString, "Sending %d", loopNbr);
 			if(write(new_fd, sendString, sizeof(sendString))<0)
@@ -179,7 +179,7 @@ int main(int argc, char *argv[]) {
 			}
 			printf("%s \n", sendString);
 		}
-		if (loopNbr > 2){
+		if (loopNbr > 3){
 			incoming=read(new_fd, instring, sizeof(instring)); //read from the server
 			//printf("incoming: %d\n", incoming);
 			//incoming = 1;

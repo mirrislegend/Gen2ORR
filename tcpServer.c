@@ -397,7 +397,7 @@ int main(int argc, char const *argv[])
 		}
 		
 		//output to user for r/w #1
-		printf("Client wants to be on channel: %s \n", tempbuff1);
+		printf("Client wants to be on channel: %d \n", atoi(tempbuff1));
 
 		//find channel to go with desire-channel name
 		int n=0;
@@ -440,11 +440,11 @@ int main(int argc, char const *argv[])
 
 		
 		//read/write pair #4
-		printf("Attempt to read BEFORE fork\n");
+		//printf("Attempt to read BEFORE fork\n");
 		char tempbuff2[128];
 		int size4;
 		size4=read(clsock, tempbuff2, sizeof(tempbuff2));
-		printf(ANSI_COLOR_YELLOW "Characters: %d. Message: %s \n\n" ANSI_COLOR_RESET, size4, tempbuff2);
+		printf("Attempt to read BEFORE fork:  "ANSI_COLOR_YELLOW "Characters: %d. Message: %s \n" ANSI_COLOR_RESET "\n", size4, tempbuff2);
 		
 		//fork off a child process
 		int x = fork();
@@ -456,7 +456,7 @@ int main(int argc, char const *argv[])
 			case 0: //child
 				if(table[n].numsub==1) //fork off a child process ONLY when the client that just subscribed is the ONLY subscriber in its channel. This child process will still be running when new clients are subscribed to the channel and no new process is necessary. (this concept will need eventual updating, when subscribers can leave channels)
 				{
-					printf("%s \n", "Attempt read BEFORE channelserve");
+					printf( ANSI_COLOR_RED "YOU ARE IN CHILD fork" ANSI_COLOR_RESET " for Chan %d\n", atoi(tempbuff1));
 					int size;
 					char testtest[128];
 					size=read(table[0].subscriber[0], testtest, sizeof(testtest));

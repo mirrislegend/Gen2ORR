@@ -386,7 +386,7 @@ int subscribe_to_channel(channel c, int clsock)
 		exit(1);
 	}
 	//subscribetestbuff[size]='\0';
-	printf(ANSI_COLOR_YELLOW"%s\n"ANSI_COLOR_RESET"\n",subscribetestbuff, size2);
+	printf(ANSI_COLOR_YELLOW"%s\n"ANSI_COLOR_RESET"\n", subscribetestbuff);
 	
 
 
@@ -498,16 +498,15 @@ void channelserve(channel (*c))
 				printf("Read from member number %d on channel with fd number %d ", i, (*c).subscriber[i]);	
 				printf("from client:   "ANSI_COLOR_YELLOW"%s "ANSI_COLOR_RESET"\n", servetestbuff);
 
+				//ends string properly
+				//makes the string "empty" if nothing is read in aka if size==0
 				servetestbuff[size]='\0';
 
 				//fill chanbuff for broadcast
 				sprintf((*c).chanbuff, "Broadcasting from subscriber# %d: %s    \n",i, servetestbuff);
-				if (size==0)
-				{
-					sprintf((*c).chanbuff, "");
-				}
-					//null terminator
+		
 			}
+
 			//servetestbuff[size]='\0';	//not needed here //null terminator
 			//fflush(stdout);		
 			//c.chanbuff="fake input";

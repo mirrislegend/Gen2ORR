@@ -98,13 +98,6 @@ void setUpChannelTable(channel setTable[])
 
 
 
-	
-
-
-
-
-
-
 
 
 //need a new experiment to check on waiting messages: client 1 sends a message and client 2 sends a message. if client 1's message gets read in and then written to everyone, what is on the connection with client 2? does reading from client 2 still yield the client 2 message? does client 2 still receive the client 1 message?
@@ -223,22 +216,8 @@ int main(int argc, char const *argv[]){
 		//call the subscribe method
 		int clsock = subscribe_to_channel(table[n], csock);
 		printf(ANSI_COLOR_GREEN"%s\n\n" ANSI_COLOR_RESET, "Exited the subscribe_to_channel method");
-/*
-//this is code for test messages - debugging only
-	char subscribetestbuff[128];
-	memset(subscribetestbuff,'\0',128);
-	int size2;
-	//read of r/w #3
-	size2 = read(clsock, subscribetestbuff, sizeof(subscribetestbuff));
-	if (size2<0)
-	{
-		perror("write");
-		exit(1);
-	}
-	//subscribetestbuff[size]='\0';
-	printf(ANSI_COLOR_YELLOW"%s\n"ANSI_COLOR_RESET"\n",subscribetestbuff, size2);
 
-*/		printf("Close connection to rendezvous.\n");
+		printf("Close connection to rendezvous.\n");
 		close(csock);
 
 
@@ -268,20 +247,8 @@ int main(int argc, char const *argv[]){
 
 		printf("Number of subscribers after subscription of latest client: %d \n\n", table[n].numsub);
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-		/*
-		//GetSocketOptions(clsock);
-		//read/write pair #4
-		char tempbuff2[128];
-		int size4;
-		size4=read(clsock, tempbuff2, sizeof(tempbuff2));
-		if (size4<0)
-		{
-			printf("error with reading\n");
-			perror("write");
-			exit(1);
-		}
-		printf("Attempt to read BEFORE fork:\n"ANSI_COLOR_YELLOW "Message: %s Characters: %d\n\n" ANSI_COLOR_RESET, tempbuff2, size4);
-		*/
+
+		
 
 		//fork off a child process
 		int x = fork();
@@ -293,35 +260,18 @@ int main(int argc, char const *argv[]){
 			case 0: //child
 
 				printf(ANSI_COLOR_RED "YOU ARE IN CHILD fork\n" ANSI_COLOR_RESET);
-				/*
-				int sizex;
-				char testtestx[128];
-				memset(testtestx,'\0',128);
 				
-				sizex=read(table[n].subscriber[(table[n].numsub)-1], testtestx, sizeof(testtestx));
-				printf("Attempt to read AFTER fork, BEFORE checking to run channelserve\n");
-				printf(ANSI_COLOR_YELLOW "Message: %s Characters: %d"ANSI_COLOR_RESET" \n\n", testtestx, sizex);
-				*/
 
 				if(table[n].numsub==1) //fork off a child process ONLY when the client that just subscribed is the ONLY subscriber in its channel. This child process will still be running when new clients are subscribed to the channel and no new process is necessary. (this concept will need eventual updating, when subscribers can leave channels)
 				{
-					printf(ANSI_COLOR_MAGENTA "If you can read this, then you have just subscribed a client to the channel for the first time. That means channel serve WILL be entered. Channelserve contains the 4th and 5th print statements. So you WILL see the 4th and 5th print statements.\n" ANSI_COLOR_RESET);
-					//printf("Attempting to read AFTER fork, AFTER checking to run channelserve,\nBEFORE channelserve\n");
+					printf(ANSI_COLOR_MAGENTA "If you can read this, then you have just subscribed a client to the channel for the first time. That means channel serve WILL be entered.\n" ANSI_COLOR_RESET);
 					
-					//int size;
-					//char testtest[128];
-					//memset(testtest,'\0',128);
-					
-					//size=read(table[n].subscriber[0], testtest, sizeof(testtest));
-					//printf(ANSI_COLOR_YELLOW "Message: %s\nCharacters: %d"ANSI_COLOR_RESET" \n\n", testtest, size);
-
-					//printf("About to enter channelserve on channel %d \n", n+1);
 
 					channelserve(&(table[n]));
 				}
 				else
 				{
-					printf(ANSI_COLOR_RED "If you can read this, then the client that you have just subscribed to the channel is NOT the first client in that channel. That means channel serve WILL NOT be entered. Channelserve contains the 4th and 5th print statements. So you WILL NOT see the 4th and 5th print statements.\n"ANSI_COLOR_RESET);
+					printf(ANSI_COLOR_RED "If you can read this, then the client that you have just subscribed to the channel is NOT the first client in that channel. That means channel serve WILL NOT be entered.\n"ANSI_COLOR_RESET);
 					printf(ANSI_COLOR_RESET"\n");
 				}
 				close(csock);
@@ -474,8 +424,7 @@ void channelserve(channel (*c))
 		n=(*c).numsub;	
 		printf("There are %d clients currently subscribed to this channel.\n", n);
 		char servetestbuff[1024];
-		//print the fds
-		//printf("check fd: 0:%d 1:%d 2:%d 3:%d\n",c.subscriber[0],c.subscriber[1],c.subscriber[2],c.subscriber[3]);
+
 
 		for (int i=0; i<n; i++) //for each subscriber
 		{

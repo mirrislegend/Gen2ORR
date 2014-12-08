@@ -158,8 +158,8 @@ int main(int argc, char *argv[]) {
 	new_fd = client_serve(new_port_number, &server_addr, sock);
 	close(sock);
 
-printf("Testing connection between client and channel.\n");	
-if(write(new_fd, "If you can see this, the client successfully connected to the channel\n", sizeof("If you can see this, the client successfully connected to the channel\n"))<0)
+	printf("Testing connection between client and channel.\n");	
+	if(write(new_fd, "If you can see this, the client successfully connected to the channel\n", sizeof("If you can see this, the client successfully connected to the channel\n"))<0)
 	{
 		perror("write");
 		exit(1);
@@ -207,15 +207,13 @@ if(write(new_fd, "If you can see this, the client successfully connected to the 
 
 		sleep(1);
 		
-		//FILE* fp2 = fdopen(new_fd, "w");
-		//fflush(fp2);
+		
 
 	}
-	//FILE* fp3 = fdopen(new_fd, "w");
-	//fflush(fp3);
+
 
 	printf(ANSI_COLOR_GREEN "%s \n"ANSI_COLOR_RESET, "Finished sending test data to server");
-	//printf(ANSI_COLOR_YELLOW  "%s"  ANSI_COLOR_RESET "\n", "yellow yellow yellow");
+	
 
 /*
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

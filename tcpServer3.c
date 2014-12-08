@@ -451,9 +451,17 @@ void channelserve(channel (*c))
 	while(1)
 	{	
 		printf("This is the top of the channelserve loop\n");
+		
+		char servetestbuff[1024];
+		servetestbuff[0]='z';
+		printf("Cleared channel read-in buffer (which will later be removed, with only one buffer for input and output).\n");
+		
+		(*c).chanbuff[0]='z';
+		printf("Cleared channel buffer.\n");
+
 		n=(*c).numsub;	
 		printf("There are %d clients currently subscribed to this channel.\n", n);
-		char servetestbuff[1024];
+		
 
 
 		for (int i=0; i<n; i++) //for each subscriber
@@ -461,8 +469,7 @@ void channelserve(channel (*c))
 			printf("Reading from subscriber #%d: \n", i);
 			int size;
 			size=read((*c).subscriber[i], servetestbuff, sizeof(servetestbuff)); //read from that subscriber
-			printf("%d\n", size); //print number of characters read in
-
+			
 			if(size<0) //error handling
 			{
 				perror("read");
@@ -474,7 +481,7 @@ void channelserve(channel (*c))
 			//}
 			else if(size>=0)
 			{
-				printf("Read from member number %d on channel with fd number %d ", i, (*c).subscriber[i]);	
+				printf("Read(past tense) %d characters from member #%d on channel with fd number %d ", size, i, (*c).subscriber[i]);	
 				printf("from client:   "ANSI_COLOR_YELLOW"%s "ANSI_COLOR_RESET"\n", servetestbuff);
 
 				//ends string properly
@@ -482,16 +489,12 @@ void channelserve(channel (*c))
 				servetestbuff[size]='\0';
 
 				//fill chanbuff for broadcast
-				sprintf((*c).chanbuff, "Broadcasting from subscriber# %d: %s    \n",i, servetestbuff);
+				sprintf((*c).chanbuff, "Broadcast(past tense) from subscriber# %d: %s    \n",i, servetestbuff);
+				printf("Server side is broadcasting: "ANSI_COLOR_YELLOW"%s"ANSI_COLOR_RESET"", (*c).chanbuff);
 		
 			}
 
-			//servetestbuff[size]='\0';	//not needed here //null terminator
-			//fflush(stdout);		
-			//c.chanbuff="fake input";
-			//strcpy(servetestbuff, "fake input");	
-			//printf("%d characters were read in \n", size1);
-
+		
 			//printf("%s \n", "This print statement executes immediately after printing data from client");
 			
 			
@@ -499,24 +502,24 @@ void channelserve(channel (*c))
 			//i want to get the reading in part working first before i start writing out
 			
 
-			if(strcmp((*c).chanbuff,"") != 0) //if something is read in
+			if((*c).chanbuff[0]!='\0') //if something is read in
 			{
 				for (int j=0; j<n; j++) //for each member
 				{
-					if (j==i||j!=i) //that is not the current member  **************debug**********************************
+					//if (j!=i) //that is not the current member  
 
-					{
-						printf("Write to member %d \n", j);
+					//{
+						printf("Write to member #%d: \n", j);
 						if (write((*c).subscriber[j], (*c).chanbuff, strlen((*c).chanbuff))<0) //write to that member
 						{
 							perror ("read");
 							exit(1);
 						}
 						else{
-							printf("sent: %s \n", (*c).chanbuff);
+							printf("Written: "ANSI_COLOR_YELLOW"%s"ANSI_COLOR_RESET" \n", (*c).chanbuff);
 						}
 
-					}
+					//}
 				}
 			}
 			

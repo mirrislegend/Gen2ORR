@@ -30,7 +30,7 @@ typedef struct{
 	int subscriber[10]; //file descriptors of client sockets
 } channel;
 
-int subscribe_to_channel(channel c, int clsock);
+int subscribe_to_channel(channel * c, int clsock);
 void channelserve(channel *c);
 
 //takes in a table of channels. mutates table. returns nothing.
@@ -214,7 +214,7 @@ int main(int argc, char const *argv[]){
 
 	
 		//call the subscribe method
-		int clsock = subscribe_to_channel(table[n], csock);
+		int clsock = subscribe_to_channel(&(table[n]), csock);
 		printf(ANSI_COLOR_GREEN"%s\n\n" ANSI_COLOR_RESET, "Exited the subscribe_to_channel method");
 
 		printf("Close connection to rendezvous.\n");
@@ -223,7 +223,7 @@ int main(int argc, char const *argv[]){
 
 		//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 		//from here down to next big marker made of tilde's should be in the subscribe to channel method. read the notes on the subscribe to channel method for a better explanation
-		for (int m=0; m<10; m++)
+/*		for (int m=0; m<10; m++)
 		{
 			
 			
@@ -246,6 +246,7 @@ int main(int argc, char const *argv[]){
 		table[n].numsub=(table[n].numsub)+1;  //just subscribed a member, so increment the number of subscribers
 
 		printf("Number of subscribers after subscription of latest client: %d \n\n", table[n].numsub);
+*/
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 		
@@ -261,7 +262,8 @@ int main(int argc, char const *argv[]){
 
 				printf(ANSI_COLOR_RED "YOU ARE IN CHILD fork\n" ANSI_COLOR_RESET);
 				
-
+				if(table[n].numsub<1)
+				{ printf("numsub is less than 1. shenanigans.");}
 				if(table[n].numsub==1) //fork off a child process ONLY when the client that just subscribed is the ONLY subscriber in its channel. This child process will still be running when new clients are subscribed to the channel and no new process is necessary. (this concept will need eventual updating, when subscribers can leave channels)
 				{
 					printf(ANSI_COLOR_MAGENTA "If you can read this, then you have just subscribed a client to the channel for the first time. That means channel serve WILL be entered.\n" ANSI_COLOR_RESET);
@@ -290,7 +292,7 @@ int main(int argc, char const *argv[]){
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 //this is called by the main method when it is time to subscribe a client to it's desired channel
-int subscribe_to_channel(channel c, int clsock)
+int subscribe_to_channel(channel * c, int clsock)
 {
 	
 
@@ -298,7 +300,7 @@ int subscribe_to_channel(channel c, int clsock)
 
 	//send port number of channel to client
 	printf("%s\n", "Write, to client, the socket corresponding to the client's desired channel");
-	int x = htons(c.channelport);
+	int x = htons(c->channelport);
 	//write the socket to client
 	//write for r/w pair #2
 	if (write(clsock, &x, sizeof(x))<0)
@@ -315,7 +317,7 @@ int subscribe_to_channel(channel c, int clsock)
 	//accept client's connection to channel's socket
 	struct sockaddr_in client_addr;
 	socklen_t client_len = sizeof(client_addr);
-	clsock=accept(c.channelsocket, (struct  sockaddr *)&client_addr, &client_len);
+	clsock=accept(c->channelsocket, (struct  sockaddr *)&client_addr, &client_len);
 
 	printf("Socket ID of client when connected to channel: %d \n", clsock);
 	//printf("These two socket IDs, and the corresponding pair on the client side, \n");
@@ -337,7 +339,35 @@ int subscribe_to_channel(channel c, int clsock)
 	}
 	//subscribetestbuff[size]='\0';
 	printf(ANSI_COLOR_YELLOW"%s\n"ANSI_COLOR_RESET"\n", subscribetestbuff);
+
+
+	for (int m=0; m<10; m++)
+	{
+		
+		
+		if (c->subscriber[m]==0)
+		{
+			c->subscriber[m]=clsock;
+
+			printf("Channel %d, subscriber #%d has fd=%d\n", c->channel_name, m+1, c->subscriber[m]);
+
+			break;
+		}
+		else
+		{
+			printf("Channel %d, subscriber #%d has fd=%d\n", c->channel_name, m+1, c->subscriber[m]);
+		}
+		
+
+	}
 	
+	c->numsub=(c->numsub)+1;  //just subscribed a member, so increment the number of subscribers
+
+	printf("Number of subscribers after subscription of latest client: %d \n\n", c->numsub);
+
+
+
+
 
 
 	return clsock;

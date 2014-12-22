@@ -1,4 +1,4 @@
-//server file after all the lessons learned from tcpServer_test
+//move subscribe into fork
 
 #include <unistd.h>
 #include <stdlib.h>
@@ -50,7 +50,8 @@ void setUpChannelTable(channel setTable[])
 	setTable[9].channel_name = 10;
 
 	//intializing channels
-	for (int i = 0; i < 10; i++) //each channel has
+	int i;
+	for (i = 0; i < 10; i++) //each channel has
 	{
 		setTable[i].channelport=34000+i; //a port number
 		setTable[i].chanbuff[0] = '\0';  //a buffer
@@ -87,7 +88,8 @@ void setUpChannelTable(channel setTable[])
 		int capacity = 10;
 
 		//initialize all subscribers to zero
-		for (int j=0; j<capacity; j++)
+		int j;
+		for (j=0; j<capacity; j++)
 		{
 			setTable[i].subscriber[j]=0;
 		}
@@ -340,8 +342,8 @@ int subscribe_to_channel(channel * c, int clsock)
 	//subscribetestbuff[size]='\0';
 	printf(ANSI_COLOR_YELLOW"%s\n"ANSI_COLOR_RESET"\n", subscribetestbuff);
 
-
-	for (int m=0; m<10; m++)
+	int m;
+	for (m=0; m<10; m++)
 	{
 		
 		
@@ -441,32 +443,36 @@ void leave_channel(int clsock)
 void channelserve(channel (*c))
 {
 	//entire channel socket is already in channel table
-	printf("%s \n", "you've reached the channelserve method! hooray!");
+	printf("-%s \n", "You've reached the channelserve method!");
 
 	//this is the code for continual discussion between client and server.
 
 	
-	printf("%s \n", "Start loop for constantly handling channel");
+	printf("-%s \n\n", "Start loop for constantly handling channel");
 	int n;
 	while(1)
 	{	
-		printf("This is the top of the channelserve loop\n");
+		printf("-This is the top of the channelserve loop\n");
 		
-		char servetestbuff[1024];
-		servetestbuff[0]='z';
-		printf("Cleared channel read-in buffer (which will later be removed, with only one buffer for input and output).\n");
+		char servetestbuff[128];
 		
-		(*c).chanbuff[0]='z';
-		printf("Cleared channel buffer.\n");
+		memset( servetestbuff, '\0', 128);
+		//servetestbuff[0]='z';
+		printf("-Cleared channel read-in buffer (which will later be removed, with only one buffer for input and output).\n");
+		
+		
+		memset((*c).chanbuff, '\0', 128);
+		//(*c).chanbuff[0]='z';
+		printf("-Cleared channel buffer.\n");
 
 		n=(*c).numsub;	
-		printf("There are %d clients currently subscribed to this channel.\n", n);
+		printf("-There are %d clients currently subscribed to this channel.\n", n);
 		
 
-
-		for (int i=0; i<n; i++) //for each subscriber
+		int i;
+		for (i=0; i<n; i++) //for each subscriber
 		{
-			printf("Reading from subscriber #%d: \n", i);
+			printf("-Reading from subscriber #%d. \n", i);
 			int size;
 			size=read((*c).subscriber[i], servetestbuff, sizeof(servetestbuff)); //read from that subscriber
 			
@@ -479,18 +485,41 @@ void channelserve(channel (*c))
 			//{
 			//	sprintf(c.chanbuff, "");
 			//}
-			else if(size>=0)
+			else if(size>0)
 			{
-				printf("Read(past tense) %d characters from member #%d on channel with fd number %d ", size, i, (*c).subscriber[i]);	
-				printf("from client:   "ANSI_COLOR_YELLOW"%s "ANSI_COLOR_RESET"\n", servetestbuff);
+				printf("-Read(past tense) %d characters from member #%d on channel with fd number %d\n", size, i, (*c).subscriber[i]);	
+				printf("-from client: "ANSI_COLOR_YELLOW"%s"ANSI_COLOR_RESET"\n", servetestbuff);
 
+								
 				//ends string properly
 				//makes the string "empty" if nothing is read in aka if size==0
-				servetestbuff[size]='\0';
+				//servetestbuff[size]='z';
 
 				//fill chanbuff for broadcast
-				sprintf((*c).chanbuff, "Broadcast(past tense) from subscriber# %d: %s    \n",i, servetestbuff);
-				printf("Server side is broadcasting: "ANSI_COLOR_YELLOW"%s"ANSI_COLOR_RESET"", (*c).chanbuff);
+				sprintf((*c).chanbuff, "Received from subscriber# %d: "ANSI_COLOR_YELLOW"%s"ANSI_COLOR_RESET"\n",i, servetestbuff);
+				printf("-Server side is broadcasting: "ANSI_COLOR_YELLOW"%s"ANSI_COLOR_RESET"", (*c).chanbuff);
+
+				//if(size!=0) //if something is read in
+				//{
+					int j;
+					for (j=0; j<n; j++) //for each member
+					{
+						//if (j!=i) //that is not the current member  
+
+						//{
+							printf("-Write to member #%d: \n", j);
+							if (write((*c).subscriber[j], (*c).chanbuff, strlen((*c).chanbuff))<0) //write to that member
+							{
+								perror ("read");
+								exit(1);
+							}
+							else{
+								printf("-Written: "ANSI_COLOR_YELLOW"%s"ANSI_COLOR_RESET" \n", (*c).chanbuff);
+							}
+
+						//}
+					}
+				//}
 		
 			}
 
@@ -500,11 +529,12 @@ void channelserve(channel (*c))
 			
 			//this is where the server writes out to the clients the data that was read in
 			//i want to get the reading in part working first before i start writing out
-			
 
-			if((*c).chanbuff[0]!='\0') //if something is read in
+
+		/*	if((*c).chanbuff[0]!='z') //if something is read in
 			{
-				for (int j=0; j<n; j++) //for each member
+				int j;
+				for (j=0; j<n; j++) //for each member
 				{
 					//if (j!=i) //that is not the current member  
 
@@ -521,7 +551,7 @@ void channelserve(channel (*c))
 
 					//}
 				}
-			}
+			}*/
 			
 /*			//sleep(3);
 

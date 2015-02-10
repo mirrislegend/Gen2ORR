@@ -9,6 +9,7 @@
 #include <arpa/inet.h>
 #include <string.h>
 #include <errno.h>  
+#include <sys/wait.h>
 
 #define ANSI_COLOR_RED     "\x1b[31m"
 #define ANSI_COLOR_GREEN   "\x1b[32m"
@@ -100,10 +101,10 @@ void setUpChannelTable(channel setTable[])
 
 
 
-
-
 //need a new experiment to check on waiting messages: client 1 sends a message and client 2 sends a message. if client 1's message gets read in and then written to everyone, what is on the connection with client 2? does reading from client 2 still yield the client 2 message? does client 2 still receive the client 1 message?
 //that works!
+
+
 
 int main(int argc, char const *argv[]){
 
@@ -162,7 +163,7 @@ int main(int argc, char const *argv[]){
 	
 	printf("Please initialize client now \n\n");
 
-	//this loop represents the rendezvous constantly receiving incoming clients, making channels when possible, and handing those clients to channels 
+	//this loop represents the rendezvous constantly receiving incoming clients, making channels when proper, and handing those clients to channels 
 	while(1)
 	{
 		int csock;
@@ -223,37 +224,8 @@ int main(int argc, char const *argv[]){
 		close(csock);
 
 
-		//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-		//from here down to next big marker made of tilde's should be in the subscribe to channel method. read the notes on the subscribe to channel method for a better explanation
-/*		for (int m=0; m<10; m++)
-		{
-			
-			
-			if (table[n].subscriber[m]==0)
-			{
-				table[n].subscriber[m]=clsock;
-
-				printf("Channel %d, subscriber #%d has fd=%d\n", n+1, m+1, table[n].subscriber[m]);
-
-				break;
-			}
-			else
-			{
-				printf("Channel %d, subscriber #%d has fd=%d\n", n+1, m+1, table[n].subscriber[m]);
-			}
-			
-
-		}
-		
-		table[n].numsub=(table[n].numsub)+1;  //just subscribed a member, so increment the number of subscribers
-
-		printf("Number of subscribers after subscription of latest client: %d \n\n", table[n].numsub);
-*/
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-		
-
 		//fork off a child process
+		signal(SIGCHLD, SIG_IGN);
 		int x = fork();
 		switch (x)
 		{
@@ -263,9 +235,18 @@ int main(int argc, char const *argv[]){
 			case 0: //child
 
 				printf(ANSI_COLOR_RED "YOU ARE IN CHILD fork\n" ANSI_COLOR_RESET);
-				
+
+/*
+				//call the subscribe method
+				int clsock = subscribe_to_channel(&(table[n]), csock);
+				printf(ANSI_COLOR_GREEN"%s\n\n" ANSI_COLOR_RESET, "Exited the subscribe_to_channel method");
+
+				printf("Close connection to rendezvous.\n");
+				close(csock);
+	*/			
 				if(table[n].numsub<1)
-				{ printf("numsub is less than 1. shenanigans.");}
+				{ printf("numsub is less than 1. shenanigans.");
+				}
 				if(table[n].numsub==1) //fork off a child process ONLY when the client that just subscribed is the ONLY subscriber in its channel. This child process will still be running when new clients are subscribed to the channel and no new process is necessary. (this concept will need eventual updating, when subscribers can leave channels)
 				{
 					printf(ANSI_COLOR_MAGENTA "If you can read this, then you have just subscribed a client to the channel for the first time. That means channel serve WILL be entered.\n" ANSI_COLOR_RESET);
@@ -328,19 +309,6 @@ int subscribe_to_channel(channel * c, int clsock)
 	
 	printf("%s\n", "Testing connection between channel and client");
 
-	//this is code for test messages - debugging only
-	char subscribetestbuff[128];
-	memset(subscribetestbuff,'\0',128);
-	int size2;
-	//read of r/w #3
-	size2 = read(clsock, subscribetestbuff, sizeof(subscribetestbuff));
-	if (size2<0)
-	{
-		perror("write");
-		exit(1);
-	}
-	//subscribetestbuff[size]='\0';
-	printf(ANSI_COLOR_YELLOW"%s\n"ANSI_COLOR_RESET"\n", subscribetestbuff);
 
 	int m;
 	for (m=0; m<10; m++)
@@ -368,6 +336,19 @@ int subscribe_to_channel(channel * c, int clsock)
 	printf("Number of subscribers after subscription of latest client: %d \n\n", c->numsub);
 
 
+	//this is code for test messages - debugging only
+	char subscribetestbuff[128];
+	memset(subscribetestbuff,'\0',128);
+	int size2;
+	//read of r/w #3
+	size2 = read(clsock, subscribetestbuff, sizeof(subscribetestbuff));
+	if (size2<0)
+	{
+		perror("write");
+		exit(1);
+	}
+	//subscribetestbuff[size]='\0';
+	printf(ANSI_COLOR_YELLOW"%s\n"ANSI_COLOR_RESET"\n", subscribetestbuff);
 
 
 
@@ -376,56 +357,6 @@ int subscribe_to_channel(channel * c, int clsock)
 
 }
 //subscribe ends
-
-
-//This code was inside the subscribe_to_channel method but neither loop of them worked. 
-//I had to move the functionality into the main method for it to work
-//It is terrible coding practice to do that. but now it works. and all it cost me was my integrity.
-//Hopefully we can put this functionality back in subscribe_to_channel eventually
-/*
-	int n=0;
-	while(1) //find an open slot
-	{	
-		printf("%d\n", c.subscriber[n]);
-		if (c.subscriber[n]==0)
-		{
-			c.subscriber[n]=clsock;
-
-			printf("%d \n", c.numsub);
-			c.numsub=(c.numsub)+1;  //just subscribed a member, so increment the number of subscribers
-			printf("%d \n", c.numsub);
-
-			break;
-		}
-		else
-		{
-			n++;
-		}
-	}
-*/
-
-/*
-	for (int n=0; n<10; n++)
-
-	{
-		
-		if (c.subscriber[n]==0)
-		{
-
-			c.subscriber[n]=clsock;
-			printf("Subscriber in %d slot\n", n);
-
-
-			//printf("Number of subscribers before incrementing: %d \n", c.numsub);
-			//c.numsub=(c.numsub)+1;  //just subscribed a member, so increment the number of subscribers
-			//printf("Number of subscribers after incrementing: %d \n", c.numsub);
-
-			break;
-
-		}
-	}
-*/
-//subscribe extras end
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -445,14 +376,16 @@ void channelserve(channel (*c))
 	//entire channel socket is already in channel table
 	printf("-%s \n", "You've reached the channelserve method!");
 
+	
+
 	//this is the code for continual discussion between client and server.
 
-	
 	printf("-%s \n\n", "Start loop for constantly handling channel");
 	int n;
 	while(1)
 	{	
 		printf("-This is the top of the channelserve loop\n");
+		printf("Number of subscribers: %d \nThis is the issue atm \n", (*c).numsub);	//after second subscription, this should be 2! And it is not. I think this is the major issue
 		
 		char servetestbuff[128];
 		

@@ -185,7 +185,7 @@ int main(int argc, char *argv[]) {
 			perror("write");
 			exit(1);
 		}
-		printf("%s \n", sendString);
+		printf("To server: "ANSI_COLOR_YELLOW"%s "ANSI_COLOR_RESET" \n", sendString);
 	// read from other clients through server
 	// this code hangs the client after "sending 0"
 //		if (loopNbr > 3){

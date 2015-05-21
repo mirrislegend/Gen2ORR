@@ -1,0 +1,157 @@
+//testing 3 clients on the same channel. added one by one
+
+
+obot@br-laptop-04:~/Documents/ORR/Gen2ORR-master$ ./server 27097
+Please initialize client now 
+
+Received connection from 127.0.0.1. Waiting to receive channel.
+
+Client wants to be on channel: 1 
+The port number of the desired channel is: 34000 
+Number of subscribers on that channel before latest client subscribes: 0 
+
+Entered the subscribe_to_channel method
+Write, to client, the socket corresponding to the client's desired channel
+Socket ID of client when connected to rendezvous: 14 
+Socket ID of client when connected to channel: 15 
+Testing connection between channel and client
+Channel 1, subscriber #1 has fd=15
+Number of subscribers after subscription of latest client: 1 
+
+If you can see this, the client successfully connected to the channel
+
+
+Exited the subscribe_to_channel method
+
+Close connection to rendezvous.
+YOU ARE IN CHILD fork
+If you can read this, then you have just subscribed a client to the channel for the first time. That means channelserve WILL be entered.
+-You've reached the channelserve method! 
+-Start loop for constantly handling channel 
+
+
+//as you can see below, first member of channel is clearly not recognized
+//specifically, the number of members in the channel does not update to 1
+//i believe the data is simply not coming through the pipe as it should
+
+
+-This is the top of the channelserve loop
+Number of subscribers according to child: -1 
+This is the issue atm 
+-Cleared channel read-in buffer (which will later be removed, with only one buffer for input and output).
+-Cleared channel buffer.
+-There are -1 clients currently subscribed to this channel.
+-This is the top of the channelserve loop
+Number of subscribers according to child: -1 
+This is the issue atm 
+-Cleared channel read-in buffer (which will later be removed, with only one buffer for input and output).
+-Cleared channel buffer.
+-There are -1 clients currently subscribed to this channel.
+-This is the top of the channelserve loop
+Number of subscribers according to child: -1 
+This is the issue atm 
+-Cleared channel read-in buffer (which will later be removed, with only one buffer for input and output).
+-Cleared channel buffer.
+-There are -1 clients currently subscribed to this channel.
+-This is the top of the channelserve loop
+Number of subscribers according to child: -1 
+This is the issue atm 
+-Cleared channel read-in buffer (which will later be removed, with only one buffer for input and output).
+-Cleared channel buffer.
+-There are -1 clients currently subscribed to this channel.
+Received connection from 127.0.0.1. Waiting to receive channel.
+
+-This is the top of the channelserve loop
+Number of subscribers according to child: -1 
+This is the issue atm 
+-Cleared channel read-in buffer (which will later be removed, with only one buffer for input and output).
+-Cleared channel buffer.
+-There are -1 clients currently subscribed to this channel.
+-This is the top of the channelserve loop
+Number of subscribers according to child: -1 
+This is the issue atm 
+-Cleared channel read-in buffer (which will later be removed, with only one buffer for input and output).
+-Cleared channel buffer.
+-There are -1 clients currently subscribed to this channel.
+Client wants to be on channel: 1 
+The port number of the desired channel is: 34000 
+Number of subscribers on that channel before latest client subscribes: 1 
+
+Entered the subscribe_to_channel method
+Write, to client, the socket corresponding to the client's desired channel
+Socket ID of client when connected to rendezvous: 14 
+Socket ID of client when connected to channel: 16 
+Testing connection between channel and client
+Channel 1, subscriber #1 has fd=15
+Channel 1, subscriber #2 has fd=16
+Number of subscribers after subscription of latest client: 2 
+
+If you can see this, the client successfully connected to the channel
+
+
+Exited the subscribe_to_channel method
+
+Close connection to rendezvous.
+If you can read this, then the client that you have just subscribed to the channel is NOT the first client in that channel. That means channel serve WILL NOT be entered. 2
+
+YOU ARE IN CHILD fork
+-This is the top of the channelserve loop
+Number of subscribers according to child: 2 
+This is the issue atm 
+-Cleared channel read-in buffer (which will later be removed, with only one buffer for input and output).
+-Cleared channel buffer.
+-There are 2 clients currently subscribed to this channel.
+-Reading from subscriber #0. 
+-Read(past tense) 15 characters from member #0 on channel with fd number 15
+-from client: Sending 0
+-Server side is broadcasting: Received from subscriber# 0: Sending 0
+-Write to member #0: 
+-Written: Received from subscriber# 0: Sending 0
+ 
+-Write to member #1: 
+Received from subscriber# 0: Sending 0
+-Written: Received from subscriber# 0: Sending 0
+ 
+-Reading from subscriber #1.
+
+
+//hangs here
+//I/O appears to be blocking, despite non-blocking flags
+//maybe it has to do with the built in test data
+////consider trying with actual user input
+
+
+ 
+Received connection from 127.0.0.1. Waiting to receive channel.
+Client wants to be on channel: 1 
+The port number of the desired channel is: 34000 
+Number of subscribers on that channel before latest client subscribes: 2 
+
+Entered the subscribe_to_channel method
+Write, to client, the socket corresponding to the client's desired channel
+Socket ID of client when connected to rendezvous: 14 
+Socket ID of client when connected to channel: 17 
+Testing connection between channel and client
+Channel 1, subscriber #1 has fd=15
+Channel 1, subscriber #2 has fd=16
+Channel 1, subscriber #3 has fd=17
+Number of subscribers after subscription of latest client: 3 
+
+If you can see this, the client successfully connected to the channel
+
+
+Exited the subscribe_to_channel method
+
+Close connection to rendezvous.
+If you can read this, then the client that you have just subscribed to the channel is NOT the first client in that channel. That means channel serve WILL NOT be entered. 3
+
+YOU ARE IN CHILD fork
+
+//hangs here
+
+
+
+^C
+obot@br-laptop-04:~/Documents/ORR/Gen2ORR-master$ ^C
+obot@br-laptop-04:~/Documents/ORR/Gen2ORR-master$ ^C
+obot@br-laptop-04:~/Documents/ORR/Gen2ORR-master$ 

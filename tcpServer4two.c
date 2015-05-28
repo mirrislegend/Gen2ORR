@@ -129,8 +129,8 @@ int main(int argc, char const *argv[])
 
 	printf("error number before mkfifo is: %d\n",errno);
 //returns 0 atm
-	mkfifo("/tmp/myFIFO",  S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);	
-		
+	//mkfifo("/tmp/myFIFO",  S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);	
+	mkfifo("/tmp/myFIFO", 0666);	
 
 	printf("error number after mkfifo is: %d\n",errno);
 //returns 0 atm
@@ -291,22 +291,25 @@ int main(int argc, char const *argv[])
 					printf(ANSI_COLOR_MAGENTA "If you can read this, then you have just subscribed a client to the channel for the first time. That means channelserve WILL be entered.\n" ANSI_COLOR_RESET);
 					
 
-					
+	/*				
 
 			printf("error number before open in child is: %d\n",errno);	
 			//returns 0 atm
 					
 					fd = open("/tmp/myFIFO", O_WRONLY|O_NONBLOCK);
+					
 
 			//returns 6 atm
 			printf("error number after open in child is: %d\n",errno);	
 
 					pipebuff=table[n].numsub;
 					write (fd, &pipebuff, sizeof(pipebuff));
+close (fd);
+			printf("error number after write and close in child is: %d\n",errno);	
 
 					usleep(10000);
 					
-					
+			*/		
 					channelserve(&(table[n]));
 		
 
@@ -340,6 +343,7 @@ printf("error number after open in parent is: %d\n",errno);
 					write (fd, &pipebuff, sizeof(pipebuff));
 
 					usleep(10000);
+					close(fd);
 					
 					
 				}
@@ -457,9 +461,9 @@ void leave_channel(int clsock)
 void channelserve(channel (*c))
 {
 printf("error number at start of channelserve is: %d\n",errno); 
-//returns 9 atm
+//returns 0 atm
 	int fd=-2;
-	int pipebuff=-2;
+	int pipebuff=1;
 	int numsubscribersparent=1;
 
 
@@ -478,11 +482,13 @@ printf("error number at start of channelserve is: %d\n",errno);
 		usleep(10000);
 		fd = open("/tmp/myFIFO", O_RDONLY|O_NONBLOCK);
 		read(fd, &pipebuff, sizeof(pipebuff));
-
+		
 printf("error number after read in channelserve is: %d\n",errno);
-//returns 9 atm
+//returns 0 atm
 		numsubscribersparent=pipebuff;
 usleep(10000);
+
+
 		(*c).numsub=numsubscribersparent;
 
 		printf("-This is the top of the channelserve loop\n");

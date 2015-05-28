@@ -244,14 +244,17 @@ int main(int argc, char const *argv[])
 		printf("The port number of the desired channel is: %d \n", table[n].channelport);
 
 			
-		printf("In main method, number of subscribers on that channel before latest client subscribes: %d \n\n", table[n].numsub);
+		printf("In main method, before fork, number of subscribers on that channel before latest client subscribes: %d \n\n", table[n].numsub);
 
+
+printf("error number before subscribe is: %d\n",errno);	
 	
 		//call the subscribe method
 		int clsock = subscribe_to_channel(&(table[n]), csock);
 		printf(ANSI_COLOR_GREEN"%s\n\n" ANSI_COLOR_RESET, "Exited the subscribe_to_channel method");
 
 		printf("In main method, number of subscribers on that channel after latest client subscribes: %d \n\n", table[n].numsub);
+printf("error number after subscribe is: %d\n",errno);	
 
 		printf("Close connection to rendezvous.\n");
 		close(csock);
@@ -268,6 +271,7 @@ int main(int argc, char const *argv[])
 			case -1: //error
 				perror("fork");
 				exit(1);
+				break;
 			case 0: //child
 			
 				printf(ANSI_COLOR_RED "YOU ARE IN CHILD fork\n" ANSI_COLOR_RESET);
@@ -318,7 +322,7 @@ close (fd);
 				
 				close(fd);
 				close(csock);
-				
+				break;
 
 			default: //parent
 				//stick the pipe writes in here, not in child side of fork?
@@ -350,7 +354,7 @@ printf("error number after open in parent is: %d\n",errno);
 				//else you should be in child fork
 
 				close(csock);
-				
+				break;
 
 		}
 	
@@ -482,9 +486,11 @@ printf("error number at start of channelserve is: %d\n",errno);
 		usleep(10000);
 		fd = open("/tmp/myFIFO", O_RDONLY|O_NONBLOCK);
 		read(fd, &pipebuff, sizeof(pipebuff));
-		
+		close(fd);
 printf("error number after read in channelserve is: %d\n",errno);
 //returns 0 atm
+
+		
 		numsubscribersparent=pipebuff;
 usleep(10000);
 
@@ -492,10 +498,8 @@ usleep(10000);
 		(*c).numsub=numsubscribersparent;
 
 		printf("-This is the top of the channelserve loop\n");
-		printf("Number of subscribers according to child: %d \nThis is the issue atm \n", (*c).numsub);
+		printf("-Number of subscribers according to child: %d \n", (*c).numsub);
 
-		////after second subscription, this should be 2! And it is not. I think this is the major issue
-		//printf("Number of subscribers according to parent: %d \n", numsubscribersparent);
 		
 		char servetestbuff[128];
 		

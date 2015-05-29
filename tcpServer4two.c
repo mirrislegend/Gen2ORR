@@ -1,8 +1,11 @@
 //move subscribe into inside fork
 //need interprocess communication as a result
-//wait! it appears that socket connections are working across the processes as expected
-//it is just failing to pass along the number of subscribers.
-//so make a pipe to pass just that data. leave subscription where it is. for now.
+//
+//second subscriber isnt being subscribed?
+//error 9 before and after reading in desired channel when second client hits rendezvous
+//error before subscribe (for second client) is 9
+//error code 9 before open in parent
+//error code 6 after open in parent
 
 //ideas about checking file table are on hold for now
 
@@ -197,6 +200,9 @@ int main(int argc, char const *argv[])
 	//this loop represents the rendezvous constantly receiving incoming clients, making channels when proper, and handing those clients to channels 
 	while(1)
 	{
+//when forked parent loops back to here, error number is 9. something goes wrong between the fork and here
+printf("---error number at top of main loop is: %d\n",errno);
+
 		int csock;
 		struct sockaddr_in client_addr;
 		socklen_t client_len = sizeof(client_addr);
@@ -204,6 +210,7 @@ int main(int argc, char const *argv[])
 		//setting up client socket and accepting pending connection
 		//program waits at accept. this means that the primary process of the program halts here, until a client tries to connect to the rendevous socket
 		csock = accept(lsock, (struct  sockaddr *)&client_addr, &client_len);
+printf("---error number after rendezvous accepts incoming socket: %d\n",errno);
 
 		//acknowledgement
 		printf("Received connection from %s. Waiting to receive channel.\n\n", inet_ntoa(client_addr.sin_addr));
@@ -211,12 +218,12 @@ int main(int argc, char const *argv[])
 		//get name from client of channel client desires
 		char tempbuff1[128];
 		int size3;
-
+printf("---error number before reading in desired channel is: %d\n",errno);
 		//receive channel from client
 		//Read for read-write pair number 1  
 		size3=read(csock, tempbuff1, sizeof(tempbuff1));
 //this read should be an int between 1 and 9.  I entered 0 and it did not reject it.
-
+printf("---error number after reading in desired channel is: %d\n",errno);	
 		if (size3<0)
 		{
 			perror("read");
@@ -226,7 +233,7 @@ int main(int argc, char const *argv[])
 		//output to user for r/w #1
 		printf("Client wants to be on channel: %d \n", atoi(tempbuff1));
 
-		//find channel to go with desire-channel name
+		//find channel to go with desired-channel name
 		int n=0;
 		while (n<10)
 		{
@@ -247,21 +254,21 @@ int main(int argc, char const *argv[])
 		printf("In main method, before fork, number of subscribers on that channel before latest client subscribes: %d \n\n", table[n].numsub);
 
 
-printf("error number before subscribe is: %d\n",errno);	
+printf("---error number before subscribe is: %d\n",errno);	
 	
 		//call the subscribe method
 		int clsock = subscribe_to_channel(&(table[n]), csock);
 		printf(ANSI_COLOR_GREEN"%s\n\n" ANSI_COLOR_RESET, "Exited the subscribe_to_channel method");
 
 		printf("In main method, number of subscribers on that channel after latest client subscribes: %d \n\n", table[n].numsub);
-printf("error number after subscribe is: %d\n",errno);	
+printf("---error number after subscribe is: %d\n",errno);	
 
 		printf("Close connection to rendezvous.\n");
 		close(csock);
 
 
 		//fork off a child process
-		signal(SIGCHLD, SIG_IGN);
+		//signal(SIGCHLD, SIG_IGN);
 		int x = fork();
 		switch (x)
 		{
@@ -314,19 +321,23 @@ close (fd);
 					usleep(10000);
 					
 			*/		
+
 					channelserve(&(table[n]));
 		
 
 				}
 				//else you should be in parent side of fork
-				
-				close(fd);
-				close(csock);
+				close(fd); //pipe is unused here
+						//but pipe was existed before fork, so pipe is open in the forked off child
+						//hence closing it.
+
+printf("---error number at bottom of child inside fork: %d\n",errno); //9 currently
 				break;
 
 			default: //parent
 				//stick the pipe writes in here, not in child side of fork?
 
+				printf(ANSI_COLOR_RED "YOU ARE IN PARENT fork\n" ANSI_COLOR_RESET);
 			
 
 				if(table[n].numsub<1)
@@ -339,29 +350,46 @@ close (fd);
 					printf(ANSI_COLOR_RESET"\n");	
 
 					
-printf("error number before open in parent is: %d\n",errno);
+printf("---error number before open in parent is: %d\n",errno); //0 currently - not a real issue yet
 					fd = open("/tmp/myFIFO", O_WRONLY|O_NONBLOCK);	
-printf("error number after open in parent is: %d\n",errno);
+printf("---error number after open in parent is: %d\n",errno); //6 currently - not a real issue yet
 
 					pipebuff=table[n].numsub;
 					write (fd, &pipebuff, sizeof(pipebuff));
 
 					usleep(10000);
-					close(fd);
+					
 					
 					
 				}
 				//else you should be in child fork
 
-				close(csock);
+printf("---error number at bottom of parent inside fork: %d\n",errno); //9 currently - current issue
+				
+				close(fd);
+
 				break;
 
 		}
+
+printf("---error number at bottom of main loop, after fork: %d\n",errno); //9 currently
 	
 	}
 	return 0;
 }
 //main ends
+
+/*
+Bug hunt data:
+
+YOU ARE IN PARENT fork
+---error number at bottom of parent inside fork: 0
+---error number at bottom of main loop, after fork: 9
+---error number at top of main loop is: 9
+YOU ARE IN CHILD fork
+
+*/
+
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -487,7 +515,7 @@ printf("error number at start of channelserve is: %d\n",errno);
 		fd = open("/tmp/myFIFO", O_RDONLY|O_NONBLOCK);
 		read(fd, &pipebuff, sizeof(pipebuff));
 		close(fd);
-printf("error number after read in channelserve is: %d\n",errno);
+printf("---error number after read in channelserve is: %d\n",errno);
 //returns 0 atm
 
 		

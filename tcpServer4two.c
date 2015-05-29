@@ -197,7 +197,7 @@ int main(int argc, char const *argv[])
 	
 	printf("Please initialize client now \n\n");
 
-	//this loop represents the rendezvous constantly receiving incoming clients, making channels when proper, and handing those clients to channels 
+	//this loop represents the rendezvous constantly receiving incoming clients, making channels when proper, and handing 		those clients to channels 
 	while(1)
 	{
 //when forked parent loops back to here, error number is 9. something goes wrong between the fork and here
@@ -265,112 +265,118 @@ printf("---error number after subscribe is: %d\n",errno);
 
 		printf("Close connection to rendezvous.\n");
 		close(csock);
+		
 
-
+printf("---error number right before fork is: %d\n",errno);
 		//fork off a child process
 		//signal(SIGCHLD, SIG_IGN);
 		int x = fork();
-		switch (x)
+		int fd;
+		int pipebuff;
+		
+		
+		if (x==0) //child
 		{
+printf("---error number at top of child is: %d\n",errno);
+			printf(ANSI_COLOR_RED "	YOU ARE IN CHILD fork\n" ANSI_COLOR_RESET);
 
-			int fd;
-			int pipebuff;
-			case -1: //error
-				perror("fork");
-				exit(1);
-				break;
-			case 0: //child
+
 			
-				printf(ANSI_COLOR_RED "YOU ARE IN CHILD fork\n" ANSI_COLOR_RESET);
+/*
+			//call the subscribe method
+			int clsock = subscribe_to_channel(&(table[n]), csock);
+			printf(ANSI_COLOR_GREEN"%s\n\n" ANSI_COLOR_RESET, "Exited the subscribe_to_channel method");
 
+			printf("Close connection to rendezvous.\n");
+			close(csock);
+*/			
+			if(table[n].numsub<1)
+			{
+				printf("numsub is less than 1. shenanigans.");
+			}
+			else if(table[n].numsub==1) //fork off a child process ONLY when the client that just subscribed is the ONLY subscriber in its channel. This child process will still be running when new clients are subscribed to the channel and no new process is necessary. (this concept will need eventual updating, when subscribers can leave channels)
+			{
+				printf(ANSI_COLOR_MAGENTA "If you can read this, then you have just subscribed a client to the channel for the first time. That means channelserve WILL be entered.\n" ANSI_COLOR_RESET);
+				
+
+/*				
+
+		printf("error number before open in child is: %d\n",errno);	
+		//returns 0 atm
+				
+				fd = open("/tmp/myFIFO", O_WRONLY|O_NONBLOCK);
+				
+
+		//returns 6 atm
+		printf("error number after open in child is: %d\n",errno);	
+
+				pipebuff=table[n].numsub;
+				write (fd, &pipebuff, sizeof(pipebuff));
+close (fd);
+		printf("error number after write and close in child is: %d\n",errno);	
+
+				usleep(10000);
+				
+		*/		
+
+				channelserve(&(table[n]));
+	
+
+			}
+			//else you should be in parent side of fork
+			close(fd); //pipe is unused here
+					//but pipe was existed before fork, so pipe is open in the forked off child
+					//hence closing it.
+
+	printf("---error number at bottom of child inside fork: %d\n",errno); //9 currently
+		}
+		else if (x>0) 		//parent
+		{
+			printf(ANSI_COLOR_RED "YOU ARE IN PARENT fork\n" ANSI_COLOR_RESET);
+		printf("---error number at top of parent inside fork: %d\n",errno);
+
+			if(table[n].numsub<1)
+			{
+				printf("numsub is less than 1. shenanigans.");
+			}
+			else if(table[n].numsub>1)
+			{
+				printf(ANSI_COLOR_RED "If you can read this, then the client that you have just subscribed to the channel is NOT the first client in that channel. That means channel serve WILL NOT be entered. %d\n"ANSI_COLOR_RESET, table[n].numsub);
+				printf(ANSI_COLOR_RESET"\n");	
 
 				
-/*
-				//call the subscribe method
-				int clsock = subscribe_to_channel(&(table[n]), csock);
-				printf(ANSI_COLOR_GREEN"%s\n\n" ANSI_COLOR_RESET, "Exited the subscribe_to_channel method");
-
-				printf("Close connection to rendezvous.\n");
-				close(csock);
-	*/			
-				if(table[n].numsub<1)
-				{
-					printf("numsub is less than 1. shenanigans.");
-				}
-				else if(table[n].numsub==1) //fork off a child process ONLY when the client that just subscribed is the ONLY subscriber in its channel. This child process will still be running when new clients are subscribed to the channel and no new process is necessary. (this concept will need eventual updating, when subscribers can leave channels)
-				{
-					printf(ANSI_COLOR_MAGENTA "If you can read this, then you have just subscribed a client to the channel for the first time. That means channelserve WILL be entered.\n" ANSI_COLOR_RESET);
-					
-
-	/*				
-
-			printf("error number before open in child is: %d\n",errno);	
-			//returns 0 atm
-					
-					fd = open("/tmp/myFIFO", O_WRONLY|O_NONBLOCK);
-					
-
-			//returns 6 atm
-			printf("error number after open in child is: %d\n",errno);	
-
-					pipebuff=table[n].numsub;
-					write (fd, &pipebuff, sizeof(pipebuff));
-close (fd);
-			printf("error number after write and close in child is: %d\n",errno);	
-
-					usleep(10000);
-					
-			*/		
-
-					channelserve(&(table[n]));
-		
-
-				}
-				//else you should be in parent side of fork
-				close(fd); //pipe is unused here
-						//but pipe was existed before fork, so pipe is open in the forked off child
-						//hence closing it.
-
-printf("---error number at bottom of child inside fork: %d\n",errno); //9 currently
-				break;
-
-			default: //parent
-				//stick the pipe writes in here, not in child side of fork?
-
-				printf(ANSI_COLOR_RED "YOU ARE IN PARENT fork\n" ANSI_COLOR_RESET);
-			
-
-				if(table[n].numsub<1)
-				{
-					printf("numsub is less than 1. shenanigans.");
-				}
-				else if(table[n].numsub>1)
-				{
-					printf(ANSI_COLOR_RED "If you can read this, then the client that you have just subscribed to the channel is NOT the first client in that channel. That means channel serve WILL NOT be entered. %d\n"ANSI_COLOR_RESET, table[n].numsub);
-					printf(ANSI_COLOR_RESET"\n");	
-
-					
 printf("---error number before open in parent is: %d\n",errno); //0 currently - not a real issue yet
-					fd = open("/tmp/myFIFO", O_WRONLY|O_NONBLOCK);	
+				fd = open("/tmp/myFIFO", O_WRONLY|O_NONBLOCK);	
 printf("---error number after open in parent is: %d\n",errno); //6 currently - not a real issue yet
 
-					pipebuff=table[n].numsub;
-					write (fd, &pipebuff, sizeof(pipebuff));
-
-					usleep(10000);
-					
-					
-					
+				pipebuff=table[n].numsub;
+				if (-1 == write (fd, &pipebuff, sizeof(pipebuff)))
+				{
+					printf("GOTCHA!");
+					exit(1);
 				}
-				//else you should be in child fork
+
+				usleep(10000);
+				
+				
+				
+			}
+			//else you should be in child fork
 
 printf("---error number at bottom of parent inside fork: %d\n",errno); //9 currently - current issue
-				
-				close(fd);
-
-				break;
-
+			
+			close(fd);
 		}
+		else if (x<0)
+		{
+		
+			perror("fork");
+			exit(1);
+			
+		
+		}
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~		
 
 printf("---error number at bottom of main loop, after fork: %d\n",errno); //9 currently
 	
@@ -388,6 +394,14 @@ YOU ARE IN PARENT fork
 ---error number at top of main loop is: 9
 YOU ARE IN CHILD fork
 
+-try putting error checking everywhere. should theoretically yield source of errno change
+ 
+-if bug is after fork and not in parent, must be in child. since child errno checker never displays, maybe it is happening inside channelserve?
+-can't be, because all the errno checks inside channelserve are coming up clean
+
+-maybe this error doesn't matter. consider refocusing on the second client issue
+	-if subscribe method is not called in child, then it is overwriting the same variable name each loop
+	-speaking of that variable, what's the point of clsock in main? does subscribe method really need a return?
 */
 
 
@@ -492,7 +506,7 @@ void leave_channel(int clsock)
 
 void channelserve(channel (*c))
 {
-printf("error number at start of channelserve is: %d\n",errno); 
+printf("---error number at start of channelserve is: %d\n",errno); 
 //returns 0 atm
 	int fd=-2;
 	int pipebuff=1;

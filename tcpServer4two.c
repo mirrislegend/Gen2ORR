@@ -1,7 +1,5 @@
-//move subscribe into inside fork
-//need interprocess communication as a result
-//
-//second subscriber isnt being subscribed?
+//automatic reads and writes of tcpClient2 may be the reason behind current nonfunctionality. Think about this with more sleep
+
 //error 9 before and after reading in desired channel when second client hits rendezvous
 //error before subscribe (for second client) is 9
 //error code 9 before open in parent
@@ -179,6 +177,8 @@ int main(int argc, char const *argv[])
 		exit(1);
 	}
 
+	int option=1;
+	setsockopt(lsock, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(int));
 
 	//binding address to socket
 	if(bind(lsock, (struct sockaddr *)&rendez_addr, sizeof(rendez_addr))==-1)
@@ -196,6 +196,8 @@ int main(int argc, char const *argv[])
 	}
 	
 	printf("Please initialize client now \n\n");
+
+//~~~~~~~~~~~~~~~~this is the top of main's primary while loop
 
 	//this loop represents the rendezvous constantly receiving incoming clients, making channels when proper, and handing 		those clients to channels 
 	while(1)
@@ -324,10 +326,12 @@ close (fd);
 
 			}
 			//else you should be in parent side of fork
-			close(fd); //pipe is unused here
+			
+	close(fd); //pipe is unused here
 					//but pipe was existed before fork, so pipe is open in the forked off child
 					//hence closing it.
 
+	close (clsock);
 	printf("---error number at bottom of child inside fork: %d\n",errno); //9 currently
 		}
 		else if (x>0) 		//parent
@@ -350,22 +354,19 @@ printf("---error number before open in parent is: %d\n",errno); //0 currently - 
 printf("---error number after open in parent is: %d\n",errno); //6 currently - not a real issue yet
 
 				pipebuff=table[n].numsub;
-				if (-1 == write (fd, &pipebuff, sizeof(pipebuff)))
-				{
-					printf("GOTCHA!");
-					exit(1);
-				}
+				write (fd, &pipebuff, sizeof(pipebuff));
+			
 
 				usleep(10000);
 				
-				
-				
+				close(fd);	
+				close (clsock);	
 			}
 			//else you should be in child fork
 
 printf("---error number at bottom of parent inside fork: %d\n",errno); //9 currently - current issue
 			
-			close(fd);
+			
 		}
 		else if (x<0)
 		{
@@ -525,10 +526,12 @@ printf("---error number at start of channelserve is: %d\n",errno);
 	int n;
 	while(1)
 	{	
+		printf("-This is the top of the channelserve loop\n");
+
 		usleep(10000);
 		fd = open("/tmp/myFIFO", O_RDONLY|O_NONBLOCK);
 		read(fd, &pipebuff, sizeof(pipebuff));
-		close(fd);
+		//close(fd);
 printf("---error number after read in channelserve is: %d\n",errno);
 //returns 0 atm
 
@@ -539,7 +542,7 @@ usleep(10000);
 
 		(*c).numsub=numsubscribersparent;
 
-		printf("-This is the top of the channelserve loop\n");
+		
 		printf("-Number of subscribers according to child: %d \n", (*c).numsub);
 
 		

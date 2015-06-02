@@ -1,4 +1,8 @@
-//automatic reads and writes of tcpClient2 may be the reason behind current nonfunctionality. Think about this with more sleep
+//no manipulation from main is making it into child
+//need for pipe from parent to child to show number of subscribers is proof of this
+//thus, subsequent subscriptions must also be missing from child
+//call subscribe inside channelserve?
+//first check that pipe is working properly
 
 //error 9 before and after reading in desired channel when second client hits rendezvous
 //error before subscribe (for second client) is 9
@@ -258,15 +262,24 @@ printf("---error number after reading in desired channel is: %d\n",errno);
 
 printf("---error number before subscribe is: %d\n",errno);	
 	
+		int clsock;
 		//call the subscribe method
-		int clsock = subscribe_to_channel(&(table[n]), csock);
-		printf(ANSI_COLOR_GREEN"%s\n\n" ANSI_COLOR_RESET, "Exited the subscribe_to_channel method");
+		if (table[n].numsub==0)
+		{
+			clsock = subscribe_to_channel(&(table[n]), csock);
+			printf(ANSI_COLOR_GREEN"%s\n\n" ANSI_COLOR_RESET, "Exited the subscribe_to_channel method");
+		}
+		else
+		{
+			table[n].numsub++;
+		}	
+			
 
 		printf("In main method, number of subscribers on that channel after latest client subscribes: %d \n\n", table[n].numsub);
 printf("---error number after subscribe is: %d\n",errno);	
 
 		printf("Close connection to rendezvous.\n");
-		close(csock);
+		
 		
 
 printf("---error number right before fork is: %d\n",errno);
@@ -282,7 +295,7 @@ printf("---error number right before fork is: %d\n",errno);
 printf("---error number at top of child is: %d\n",errno);
 			printf(ANSI_COLOR_RED "	YOU ARE IN CHILD fork\n" ANSI_COLOR_RESET);
 
-
+			close(csock);
 			
 /*
 			//call the subscribe method
@@ -353,13 +366,14 @@ printf("---error number before open in parent is: %d\n",errno); //0 currently - 
 				fd = open("/tmp/myFIFO", O_WRONLY|O_NONBLOCK);	
 printf("---error number after open in parent is: %d\n",errno); //6 currently - not a real issue yet
 
-				pipebuff=table[n].numsub;
+				pipebuff=csock;
 				write (fd, &pipebuff, sizeof(pipebuff));
 			
 
 				usleep(10000);
 				
 				close(fd);	
+				close(csock);
 				close (clsock);	
 			}
 			//else you should be in child fork
@@ -510,8 +524,8 @@ void channelserve(channel (*c))
 printf("---error number at start of channelserve is: %d\n",errno); 
 //returns 0 atm
 	int fd=-2;
-	int pipebuff=1;
-	int numsubscribersparent=1;
+	int pipebuff=0;
+	//int numsubscribersparent=1;
 
 
 
@@ -520,7 +534,7 @@ printf("---error number at start of channelserve is: %d\n",errno);
 
 	
 
-	//this is the code for continual discussion between client and server.
+	//this is the code for continual discussion between client and channel.
 
 	printf("-%s \n\n", "Start loop for constantly handling channel");
 	int n;
@@ -533,15 +547,18 @@ printf("---error number at start of channelserve is: %d\n",errno);
 		read(fd, &pipebuff, sizeof(pipebuff));
 		//close(fd);
 printf("---error number after read in channelserve is: %d\n",errno);
-//returns 0 atm
+printf("pipe yields: %d\n", pipebuff);
 
 		
-		numsubscribersparent=pipebuff;
-usleep(10000);
+//changing the pipe useage
+//		numsubscribersparent=pipebuff;
+//		(*c).numsub=numsubscribersparent;
 
-
-		(*c).numsub=numsubscribersparent;
-
+if (pipebuff>0)
+{
+	printf(ANSI_COLOR_BLUE"Attempting to subscribe from inside channelserve\n"ANSI_COLOR_RESET);
+	int spare = subscribe_to_channel(c, pipebuff);
+}
 		
 		printf("-Number of subscribers according to child: %d \n", (*c).numsub);
 
@@ -550,15 +567,21 @@ usleep(10000);
 		
 		memset( servetestbuff, '\0', 128);
 		//servetestbuff[0]='z';
-		printf("-Cleared channel read-in buffer (which will later be removed, with only one buffer for input and output).\n");
+		printf("-Cleared channel read-in buffer.\n");
 		
 		
 		memset((*c).chanbuff, '\0', 128);
 		//(*c).chanbuff[0]='z';
-		printf("-Cleared channel buffer.\n");
+		printf("-Cleared channel write-out buffer.\n");
 
 		n=(*c).numsub;	
 		printf("-There are %d clients currently subscribed to this channel.\n", n);
+		int t;
+		for (t=0; t<n; t++)
+		{
+			printf("	Current clients are fd #s: %d\n", (*c).subscriber[t]);
+		}
+
 		
 
 		int i;
@@ -582,17 +605,13 @@ usleep(10000);
 				printf("-Read(past tense) %d characters from member #%d on channel with fd number %d\n", size, i, (*c).subscriber[i]);	
 				printf("-from client: "ANSI_COLOR_YELLOW"%s"ANSI_COLOR_RESET"\n", servetestbuff);
 
-								
-				//ends string properly
-				//makes the string "empty" if nothing is read in aka if size==0
-				//servetestbuff[size]='z';
+							
 
 				//fill chanbuff for broadcast
 				sprintf((*c).chanbuff, "Received from subscriber# %d: "ANSI_COLOR_YELLOW"%s"ANSI_COLOR_RESET"\n",i, servetestbuff);
 				printf("-Server side is broadcasting: "ANSI_COLOR_YELLOW"%s"ANSI_COLOR_RESET"", (*c).chanbuff);
 
-				//if(size!=0) //if something is read in
-				//{
+				
 					int j;
 					for (j=0; j<n; j++) //for each member
 					{
@@ -602,7 +621,7 @@ usleep(10000);
 							printf("-Write to member #%d: \n", j);
 							if (write((*c).subscriber[j], (*c).chanbuff, strlen((*c).chanbuff))<0) //write to that member
 							{
-								perror ("read");
+								perror ("write");
 								exit(1);
 							}
 							else{
@@ -611,7 +630,7 @@ usleep(10000);
 
 						//}
 					}
-				//}
+				
 		
 			}
 
